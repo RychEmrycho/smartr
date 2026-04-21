@@ -21,7 +21,7 @@ class WearSyncManager(context: Context) {
                 dataMap.putLong("timestamp", System.currentTimeMillis())
                 asPutDataRequest()
             }
-            dataClient.putData(request).await()
+            dataClient.putDataItem(request).await()
             Log.d("WearSyncManager", "Settings synced to Data Layer: $settings")
         } catch (e: Exception) {
             Log.e("WearSyncManager", "Failed to sync settings", e)
