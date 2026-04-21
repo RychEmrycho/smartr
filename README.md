@@ -30,6 +30,12 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 - **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores.
 - **Dynamic Theming**: Support for dark/light modes and Wear OS 5 dynamic color schemes.
 
+### 📱 Mobile Hub
+- **Premium Dashboard**: Material 3 dashboard with wellness gauges and streak tracking.
+- **Interactive Trends**: 30-day activity charts using high-fidelity `Canvas` drawing.
+- **Real-time Sync**: Automatic mirroring of health history and settings from watch to phone.
+- **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
+
 ---
 
 ## 🗺 Roadmap
@@ -37,11 +43,11 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
 ### 📱 Phase 1: Mobile Companion
-- [ ] **Rich Dashboard**: A deep-dive mobile app for long-term health visualization (weekly/monthly/yearly).
-- [ ] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
-- [ ] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
+- [x] **Rich Dashboard**: A deep-dive mobile app for long-term health visualization (weekly/monthly/yearly).
+- [x] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
+- [x] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
-### 🏥 Phase 2: Health Intelligence
+### 🏥 Phase 2: Health Intelligence (Current Focus)
 - [ ] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
 - [ ] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
