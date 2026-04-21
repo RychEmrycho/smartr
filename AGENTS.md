@@ -3,41 +3,53 @@
 This file contains the project conventions and technical rules for all AI coding agents working on the Smartr project.
 
 ## Project Structure
-- `:mobile`: Android application for handheld devices.
-- `:wear`: Wear OS application (Primary focus for active health tracking).
+- `:mobile`: Android application (S23 Ultra companion).
+- `:wear`: Wear OS application (Primary tracker).
 
 ## Commit Conventions
-- Always use the **Conventional Commits** specification (e.g., `feat(scope): ...`, `fix(scope): ...`, `chore: ...`).
+- **Standard**: Always use [Conventional Commits](https://www.conventionalcommits.org/).
+- **Types**:
+  - `feat`: New feature or user-facing improvement.
+  - `fix`: Bug fix.
+  - `docs`: Documentation changes (README, AGENTS, etc.).
+  - `refactor`: Code change that neither fixes a bug nor adds a feature.
+  - `test`: Adding missing tests or correcting existing tests.
+  - `chore`: Maintenance tasks (Dependency updates, Gradle tweaks).
 - **Scopes**: `wear`, `mobile`, `data`, `logic`, `ui`, `worker`, `service`.
 - **Subject**: Start with a lowercase letter, use imperative mood (e.g., `feat(wear): add settings screen`).
 
 ## Tech Stack & Standards
 ### Language & Tools
-- **Kotlin 1.9/2.0+**: Use `.entries` for Enums. Prefer `val` over `var`.
+- **Kotlin 2.0+**: Use `.entries` for Enums. Prefer `val` over `var`.
 - **KSP**: Used for Room annotation processing.
 - **Gradle**: Kotlin DSL (`.gradle.kts`).
 
-### Wear OS (`:wear`)
-- **Compose Material 3**: Standardize on Wear M3 components (`TitleCard`, `AppCard`, `Button`, `Stepper`).
-- **Navigation**: Use `SwipeDismissableNavHost` from `androidx.wear.compose.navigation`.
-- **Theming**: Use `ColorScheme` and `dynamicColorScheme` (API 35+). Wear OS is dark-themed by design; `lightColorScheme` is rarely used.
-- **Health Services**: Use for passive data tracking (`PassiveDataService`).
+### Wear OS (`:wear`) - API 35+ Focus
+- **Compose Material 3**: Use Wear M3 components (`TitleCard`, `AppCard`, `Button`, `Stepper`).
+- **Layouts**: Use `ScreenScaffold` and `ScalingLazyColumn`. Optimize for different screen shapes/sizes (Circular vs. Square).
+- **Navigation**: `SwipeDismissableNavHost` is required.
+- **Wear OS 5**: Support advanced complications and haptic feedback profiles where applicable.
 - **Persistence**: 
-    - Use **Room** for structured history (`DailySummary`, `HistoryDatabase`).
-    - Use **DataStore Preferences** for simple app settings (`SettingsRepository`).
-- **WorkManager**: Use for scheduling registration or background cleanup.
+    - **Room**: For structured daily/history data.
+    - **DataStore**: For lightweight user preferences.
 
 ### Handheld (`:mobile`)
-- **Compose Material 3**: Use standard M3 components.
-- **Data Layer**: Use the Wearable Data Layer API to sync with the watch module.
+- **Rich Dashboard**: The mobile app should provide longer history trends and deeper configuration than the watch.
+- **Data Layer**: Use specific path prefixes for synchronization (e.g., `/settings/*`, `/history/*`).
 
 ## Coding Patterns
-- **Repository Pattern**: All data access should go through a repository (e.g., `SettingsRepository`).
-- **Flow/StateFlow**: UI should observe data as reactive streams.
-- **Decoupled Logic**: Keep complex calculations in "Engines" (e.g., `BehaviorInsightsEngine`, `InactivityEngine`).
-- **Dependency Injection**: Currently manual or constructor-based; keep it simple unless Hilt/Koin is explicitly introduced.
+- **Repository Pattern**: All data access MUST go through a repository.
+- **MVI/MVVM**: Use `StateFlow` to expose reactive state to the UI.
+- **Decoupled Logic**: Complex calculations (e.g., Wellness Score) MUST be encapsulated in "Engines" (e.g., `BehaviorInsightsEngine`).
+- **No Hardcoding**: All strings must use `strings.xml`. All colors must use `Color.kt` or `colors.xml`. Avoid hardcoded dimension offsets; use standard Material 3 tokens.
+- **Dependency Injection**: Use manual constructor-based DI to keep the project lightweight unless a framework is explicitly requested.
+
+## Testing Strategy
+- **Unit Tests**: All domain logic in "Engines" MUST have unit tests.
+- **Library**: Prefer **MockK** for mocking and standard JUnit 5.
+- **Integration**: Use `adb shell input` and `ui_state` for manual/agent-based validation of UI flows.
 
 ## Agent Behavior
-- **Tool Usage**: Prefer `replace_file_content` or `multi_replace_file_content` for surgical edits.
-- **Verification**: After UI changes, use `adb shell input` and `ui_state` to verify navigation and interaction.
-- **Context**: Always read relevant `build.gradle.kts` files to verify dependency versions before adding new code.
+- **Context**: Always read the relevant `build.gradle.kts` to verify dependency versions before adding new libraries.
+- **Surgical Edits**: Prefer `replace_file_content` or `multi_replace_file_content` over complete file overwrites.
+- **Verification**: After modifying UI or Logic, verify the build passes via `./gradlew assembleDebug`.
