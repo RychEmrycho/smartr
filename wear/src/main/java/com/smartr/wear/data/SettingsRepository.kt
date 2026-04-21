@@ -8,6 +8,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private val Context.dataStore by preferencesDataStore(name = "smartr_settings")
 
@@ -19,6 +22,9 @@ data class AppSettings(
 )
 
 class SettingsRepository(private val context: Context) {
+    private val syncManager = WearSyncManager(context)
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     companion object {
         private val SIT_THRESHOLD_MINUTES = intPreferencesKey("sit_threshold_minutes")
         private val REPEAT_MINUTES = intPreferencesKey("repeat_minutes")
@@ -60,26 +66,40 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun updateSitThreshold(minutes: Int) {
+        val newVal = minutes.coerceIn(15, 240)
         context.dataStore.edit { prefs ->
-            prefs[SIT_THRESHOLD_MINUTES] = minutes.coerceIn(15, 240)
+            prefs[SIT_THRESHOLD_MINUTES] = newVal
         }
+        syncToWear()
     }
 
     suspend fun updateReminderRepeat(minutes: Int) {
+        val newVal = minutes.coerceIn(5, 120)
         context.dataStore.edit { prefs ->
-            prefs[REPEAT_MINUTES] = minutes.coerceIn(5, 120)
+            prefs[REPEAT_MINUTES] = newVal
         }
+        syncToWear()
     }
 
     suspend fun updateQuietStartHour(hour: Int) {
+        val newVal = hour.coerceIn(0, 23)
         context.dataStore.edit { prefs ->
-            prefs[QUIET_START_HOUR] = hour.coerceIn(0, 23)
+            prefs[QUIET_START_HOUR] = newVal
         }
+        syncToWear()
     }
 
     suspend fun updateQuietEndHour(hour: Int) {
+        val newVal = hour.coerceIn(0, 23)
         context.dataStore.edit { prefs ->
-            prefs[QUIET_END_HOUR] = hour.coerceIn(0, 23)
+            prefs[QUIET_END_HOUR] = newVal
+        }
+        syncToWear()
+    }
+
+    private fun syncToWear() {
+        scope.launch {
+            syncManager.syncSettings(settings.first())
         }
     }
 

@@ -82,26 +82,11 @@ So the name reflects both the product personality and objective: helping users b
 
 ### Option B: Command line
 
-This repo currently does not include a Gradle wrapper (`gradlew`), so use one of:
-
-1. Generate wrapper once (recommended):
-
-```bash
-gradle wrapper
-```
-
-Then build:
+The project includes a Gradle wrapper, so you can build using:
 
 ```bash
 ./gradlew :wear:assembleDebug
 ./gradlew :mobile:assembleDebug
-```
-
-2. If Gradle is installed globally:
-
-```bash
-gradle :wear:assembleDebug
-gradle :mobile:assembleDebug
 ```
 
 Release builds:

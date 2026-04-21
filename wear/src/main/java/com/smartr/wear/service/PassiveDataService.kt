@@ -26,7 +26,6 @@ class PassiveDataService : PassiveListenerService() {
             val latestDailySteps = dataPoints.getData(DataType.STEPS_DAILY)
                 .lastOrNull()
                 ?.value
-                ?.asLong()
             val movementDetected = latestDailySteps?.let { current ->
                 val previous = PassiveRuntimeStore.lastDailySteps
                 PassiveRuntimeStore.lastDailySteps = current
