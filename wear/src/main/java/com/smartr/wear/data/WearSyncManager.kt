@@ -13,11 +13,12 @@ class WearSyncManager(context: Context) {
     suspend fun syncSettings(settings: AppSettings) {
         try {
             val request = PutDataMapRequest.create("/settings").run {
-                dataMap.putInt("sitThreshold", settings.sitThresholdMinutes)
-                dataMap.putInt("repeatMinutes", settings.reminderRepeatMinutes)
+                dataMap.putInt("sitThresholdValue", settings.sitThresholdValue)
+                dataMap.putInt("sitThresholdUnit", settings.sitThresholdUnit.ordinal)
+                dataMap.putInt("repeatValue", settings.reminderRepeatValue)
+                dataMap.putInt("repeatUnit", settings.reminderRepeatUnit.ordinal)
                 dataMap.putInt("quietStart", settings.quietStartHour)
                 dataMap.putInt("quietEnd", settings.quietEndHour)
-                // Add a timestamp to ensure data is always updated
                 dataMap.putLong("timestamp", System.currentTimeMillis())
                 asPutDataRequest()
             }

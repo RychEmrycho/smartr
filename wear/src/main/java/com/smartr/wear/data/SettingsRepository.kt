@@ -14,9 +14,21 @@ import kotlinx.coroutines.launch
 
 private val Context.dataStore by preferencesDataStore(name = "smartr_settings")
 
+enum class TimeIntervalUnit {
+    SECONDS, MINUTES, HOURS;
+
+    fun toDuration(value: Int): java.time.Duration = when (this) {
+        SECONDS -> java.time.Duration.ofSeconds(value.toLong())
+        MINUTES -> java.time.Duration.ofMinutes(value.toLong())
+        HOURS -> java.time.Duration.ofHours(value.toLong())
+    }
+}
+
 data class AppSettings(
-    val sitThresholdMinutes: Int,
-    val reminderRepeatMinutes: Int,
+    val sitThresholdValue: Int,
+    val sitThresholdUnit: TimeIntervalUnit,
+    val reminderRepeatValue: Int,
+    val reminderRepeatUnit: TimeIntervalUnit,
     val quietStartHour: Int,
     val quietEndHour: Int,
     val theme: ThemePreference
@@ -31,15 +43,24 @@ class SettingsRepository(private val context: Context) {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
-        private val SIT_THRESHOLD_MINUTES = intPreferencesKey("sit_threshold_minutes")
-        private val REPEAT_MINUTES = intPreferencesKey("repeat_minutes")
+        private val SIT_THRESHOLD_VALUE = intPreferencesKey("sit_threshold_value")
+        private val SIT_THRESHOLD_UNIT = intPreferencesKey("sit_threshold_unit")
+        private val REPEAT_VALUE = intPreferencesKey("repeat_value")
+        private val REPEAT_UNIT = intPreferencesKey("repeat_unit")
+        
+        // Legacy keys for migration
+        private val SIT_THRESHOLD_MINUTES_LEGACY = intPreferencesKey("sit_threshold_minutes")
+        private val REPEAT_MINUTES_LEGACY = intPreferencesKey("repeat_minutes")
+        
         private val QUIET_START_HOUR = intPreferencesKey("quiet_start_hour")
         private val QUIET_END_HOUR = intPreferencesKey("quiet_end_hour")
         private val THEME_PREFERENCE = intPreferencesKey("theme_preference")
 
         val DEFAULTS = AppSettings(
-            sitThresholdMinutes = 45,
-            reminderRepeatMinutes = 20,
+            sitThresholdValue = 45,
+            sitThresholdUnit = TimeIntervalUnit.MINUTES,
+            reminderRepeatValue = 20,
+            reminderRepeatUnit = TimeIntervalUnit.MINUTES,
             quietStartHour = 22,
             quietEndHour = 6,
             theme = ThemePreference.FOLLOW_SYSTEM
@@ -52,11 +73,13 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun ensureDefaults() {
         context.dataStore.edit { prefs ->
-            if (!prefs.contains(SIT_THRESHOLD_MINUTES)) {
-                prefs[SIT_THRESHOLD_MINUTES] = DEFAULTS.sitThresholdMinutes
+            if (!prefs.contains(SIT_THRESHOLD_VALUE) && !prefs.contains(SIT_THRESHOLD_MINUTES_LEGACY)) {
+                prefs[SIT_THRESHOLD_VALUE] = DEFAULTS.sitThresholdValue
+                prefs[SIT_THRESHOLD_UNIT] = DEFAULTS.sitThresholdUnit.ordinal
             }
-            if (!prefs.contains(REPEAT_MINUTES)) {
-                prefs[REPEAT_MINUTES] = DEFAULTS.reminderRepeatMinutes
+            if (!prefs.contains(REPEAT_VALUE) && !prefs.contains(REPEAT_MINUTES_LEGACY)) {
+                prefs[REPEAT_VALUE] = DEFAULTS.reminderRepeatValue
+                prefs[REPEAT_UNIT] = DEFAULTS.reminderRepeatUnit.ordinal
             }
             if (!prefs.contains(QUIET_START_HOUR)) {
                 prefs[QUIET_START_HOUR] = DEFAULTS.quietStartHour
@@ -75,18 +98,30 @@ class SettingsRepository(private val context: Context) {
         return settings.first()
     }
 
-    suspend fun updateSitThreshold(minutes: Int) {
-        val newVal = minutes.coerceIn(15, 240)
+    suspend fun updateSitThresholdValue(value: Int) {
         context.dataStore.edit { prefs ->
-            prefs[SIT_THRESHOLD_MINUTES] = newVal
+            prefs[SIT_THRESHOLD_VALUE] = value
         }
         syncToWear()
     }
 
-    suspend fun updateReminderRepeat(minutes: Int) {
-        val newVal = minutes.coerceIn(5, 120)
+    suspend fun updateSitThresholdUnit(unit: TimeIntervalUnit) {
         context.dataStore.edit { prefs ->
-            prefs[REPEAT_MINUTES] = newVal
+            prefs[SIT_THRESHOLD_UNIT] = unit.ordinal
+        }
+        syncToWear()
+    }
+
+    suspend fun updateReminderRepeatValue(value: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[REPEAT_VALUE] = value
+        }
+        syncToWear()
+    }
+
+    suspend fun updateReminderRepeatUnit(unit: TimeIntervalUnit) {
+        context.dataStore.edit { prefs ->
+            prefs[REPEAT_UNIT] = unit.ordinal
         }
         syncToWear()
     }
@@ -119,11 +154,22 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
-    private fun Preferences.toSettings(): AppSettings = AppSettings(
-        sitThresholdMinutes = this[SIT_THRESHOLD_MINUTES] ?: DEFAULTS.sitThresholdMinutes,
-        reminderRepeatMinutes = this[REPEAT_MINUTES] ?: DEFAULTS.reminderRepeatMinutes,
-        quietStartHour = this[QUIET_START_HOUR] ?: DEFAULTS.quietStartHour,
-        quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour,
-        theme = ThemePreference.values()[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal]
-    )
+    private fun Preferences.toSettings(): AppSettings {
+        // Migration logic: if legacy exists but new doesn't, use legacy and default unit to MINUTES
+        val sitValue = this[SIT_THRESHOLD_VALUE] ?: this[SIT_THRESHOLD_MINUTES_LEGACY] ?: DEFAULTS.sitThresholdValue
+        val sitUnit = this[SIT_THRESHOLD_UNIT]?.let { TimeIntervalUnit.entries[it] } ?: TimeIntervalUnit.MINUTES
+        
+        val repeatValue = this[REPEAT_VALUE] ?: this[REPEAT_MINUTES_LEGACY] ?: DEFAULTS.reminderRepeatValue
+        val repeatUnit = this[REPEAT_UNIT]?.let { TimeIntervalUnit.entries[it] } ?: TimeIntervalUnit.MINUTES
+
+        return AppSettings(
+            sitThresholdValue = sitValue,
+            sitThresholdUnit = sitUnit,
+            reminderRepeatValue = repeatValue,
+            reminderRepeatUnit = repeatUnit,
+            quietStartHour = this[QUIET_START_HOUR] ?: DEFAULTS.quietStartHour,
+            quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour,
+            theme = ThemePreference.entries[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal]
+        )
+    }
 }

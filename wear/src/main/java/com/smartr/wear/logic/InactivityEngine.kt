@@ -39,13 +39,17 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
 
         val updatedState = if (state.sedentaryStart == null) state.copy(sedentaryStart = now) else state
         val sedentaryStart = updatedState.sedentaryStart ?: now
-        val sedentaryDurationMinutes = Duration.between(sedentaryStart, now).toMinutes()
-        if (sedentaryDurationMinutes < settings.sitThresholdMinutes) {
+        val sedentaryDuration = Duration.between(sedentaryStart, now)
+        val sitThreshold = settings.sitThresholdUnit.toDuration(settings.sitThresholdValue)
+        
+        if (sedentaryDuration < sitThreshold) {
             return updatedState to InactivityDecision(false, "below_threshold")
         }
 
         val canRepeat = updatedState.lastReminderAt?.let {
-            Duration.between(it, now).toMinutes() >= settings.reminderRepeatMinutes
+            val repeatDuration = Duration.between(it, now)
+            val repeatThreshold = settings.reminderRepeatUnit.toDuration(settings.reminderRepeatValue)
+            repeatDuration >= repeatThreshold
         } ?: true
 
         return if (canRepeat) {

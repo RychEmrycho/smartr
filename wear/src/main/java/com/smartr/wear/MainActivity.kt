@@ -67,6 +67,7 @@ import androidx.work.WorkManager
 import com.smartr.wear.data.AppSettings
 import com.smartr.wear.data.SettingsRepository
 import com.smartr.wear.data.ThemePreference
+import com.smartr.wear.data.TimeIntervalUnit
 import com.smartr.wear.data.history.DailySummary
 import com.smartr.wear.data.history.HistoryRepository
 import com.smartr.wear.logic.BehaviorInsightsEngine
@@ -288,32 +289,60 @@ fun SettingsScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeEditor) {
                 SettingType.SIT_LIMIT -> {
+                    val unit = settings.sitThresholdUnit
+                    val range = when (unit) {
+                        TimeIntervalUnit.SECONDS -> 30..3600 step 30
+                        TimeIntervalUnit.MINUTES -> 1..240 step 1
+                        TimeIntervalUnit.HOURS -> 1..12 step 1
+                    }
                     Stepper(
-                        value = settings.sitThresholdMinutes,
-                        onValueChange = { scope.launch { repository.updateSitThreshold(it) } },
-                        valueProgression = 15..240 step 15,
+                        value = settings.sitThresholdValue.coerceIn(range.first, range.last),
+                        onValueChange = { scope.launch { repository.updateSitThresholdValue(it) } },
+                        valueProgression = range,
                         increaseIcon = { Icon(Icons.Default.Add, "Increase") },
                         decreaseIcon = { Icon(Icons.Default.Remove, "Decrease") }
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Sit Limit", style = MaterialTheme.typography.labelMedium)
-                            Text("${settings.sitThresholdMinutes}", style = MaterialTheme.typography.displayMedium)
-                            Text("minutes", style = MaterialTheme.typography.labelSmall)
+                            Text("${settings.sitThresholdValue}", style = MaterialTheme.typography.displayMedium)
+                            FilledTonalButton(
+                                onClick = {
+                                    val nextUnit = TimeIntervalUnit.entries[(unit.ordinal + 1) % TimeIntervalUnit.entries.size]
+                                    scope.launch { repository.updateSitThresholdUnit(nextUnit) }
+                                },
+                                modifier = Modifier.size(width = 80.dp, height = 32.dp)
+                            ) {
+                                Text(unit.name.lowercase(), style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
                 SettingType.REMINDER_REPEAT -> {
+                    val unit = settings.reminderRepeatUnit
+                    val range = when (unit) {
+                        TimeIntervalUnit.SECONDS -> 15..600 step 15
+                        TimeIntervalUnit.MINUTES -> 1..120 step 1
+                        TimeIntervalUnit.HOURS -> 1..4 step 1
+                    }
                     Stepper(
-                        value = settings.reminderRepeatMinutes,
-                        onValueChange = { scope.launch { repository.updateReminderRepeat(it) } },
-                        valueProgression = 5..120 step 5,
+                        value = settings.reminderRepeatValue.coerceIn(range.first, range.last),
+                        onValueChange = { scope.launch { repository.updateReminderRepeatValue(it) } },
+                        valueProgression = range,
                         increaseIcon = { Icon(Icons.Default.Add, "Increase") },
                         decreaseIcon = { Icon(Icons.Default.Remove, "Decrease") }
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Reminder", style = MaterialTheme.typography.labelMedium)
-                            Text("${settings.reminderRepeatMinutes}", style = MaterialTheme.typography.displayMedium)
-                            Text("minutes", style = MaterialTheme.typography.labelSmall)
+                            Text("${settings.reminderRepeatValue}", style = MaterialTheme.typography.displayMedium)
+                            FilledTonalButton(
+                                onClick = {
+                                    val nextUnit = TimeIntervalUnit.entries[(unit.ordinal + 1) % TimeIntervalUnit.entries.size]
+                                    scope.launch { repository.updateReminderRepeatUnit(nextUnit) }
+                                },
+                                modifier = Modifier.size(width = 80.dp, height = 32.dp)
+                            ) {
+                                Text(unit.name.lowercase(), style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
@@ -388,7 +417,10 @@ fun SettingsScreen(
                     TitleCard(
                         onClick = { activeEditor = SettingType.SIT_LIMIT },
                         title = { Text("Sit Limit") },
-                        subtitle = { Text("${settings.sitThresholdMinutes}m") }
+                        subtitle = { 
+                            val unitStr = settings.sitThresholdUnit.name.lowercase().removeSuffix("s")
+                            Text("${settings.sitThresholdValue} $unitStr${if (settings.sitThresholdValue > 1) "s" else ""}") 
+                        }
                     )
                 }
 
@@ -396,7 +428,10 @@ fun SettingsScreen(
                     TitleCard(
                         onClick = { activeEditor = SettingType.REMINDER_REPEAT },
                         title = { Text("Reminder Every") },
-                        subtitle = { Text("${settings.reminderRepeatMinutes}m") }
+                        subtitle = { 
+                            val unitStr = settings.reminderRepeatUnit.name.lowercase().removeSuffix("s")
+                            Text("${settings.reminderRepeatValue} $unitStr${if (settings.reminderRepeatValue > 1) "s" else ""}")
+                        }
                     )
                 }
 
