@@ -15,4 +15,11 @@ object PassiveRuntimeStore {
 
     @Volatile
     var lastPassiveCallbackAt: Instant? = null
+
+    fun reset() {
+        inactivityState = inactivityState.copy(
+            sedentaryStart = null,
+            lastReminderAt = null
+        )
+    }
 }

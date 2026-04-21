@@ -32,6 +32,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
@@ -72,6 +74,9 @@ import com.smartr.wear.data.history.DailySummary
 import com.smartr.wear.data.history.HistoryRepository
 import com.smartr.wear.logic.BehaviorInsightsEngine
 import com.smartr.wear.worker.PassiveRegistrationWorker
+import com.smartr.wear.logic.PassiveRuntimeStore
+import android.widget.Toast
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
@@ -120,7 +125,7 @@ class MainActivity : ComponentActivity() {
                         startDestination = Screen.Dashboard.route
                     ) {
                         composable(Screen.Dashboard.route) {
-                            DashboardScreen(summaries, navController)
+                            DashboardScreen(summaries, navController, historyRepository)
                         }
                         composable(Screen.History.route) {
                             HistoryScreen(summaries)
@@ -138,11 +143,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(
     summaries: List<DailySummary>,
-    navController: NavHostController
+    navController: NavHostController,
+    historyRepository: HistoryRepository
 ) {
     val insightsEngine = remember { BehaviorInsightsEngine() }
     val snapshot = insightsEngine.build(summaries)
     val listState = rememberScalingLazyListState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
         ScalingLazyColumn(
@@ -153,6 +162,26 @@ fun DashboardScreen(
         ) {
             item {
                 ListHeader { Text("Smartr", style = MaterialTheme.typography.titleMedium) }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        PassiveRuntimeStore.reset()
+                        scope.launch {
+                            historyRepository.recordReminderAcknowledged(LocalDate.now())
+                            Toast.makeText(context, "Break recorded!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text("✅ Mark as Done")
+                }
             }
 
             item {
