@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -31,8 +32,14 @@ class PassiveDataService : PassiveListenerService() {
                 PassiveRuntimeStore.lastDailySteps = current
                 previous != null && current > previous
             } ?: false
+            val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
+            PassiveRuntimeStore.lastPassiveCallbackAt = now
+            val elapsedMinutes = previousCallbackAt?.let {
+                Duration.between(it, now).toMinutes().coerceIn(0, 30)
+            } ?: 0L
 
             val settingsRepo = SettingsRepository(applicationContext)
+            val historyRepository = HistoryRepository(applicationContext)
             val settings = settingsRepo.currentSettings()
             val engine = InactivityEngine()
             val (updatedState, decision) = engine.evaluate(
@@ -42,12 +49,18 @@ class PassiveDataService : PassiveListenerService() {
                 movementDetected = movementDetected
             )
             PassiveRuntimeStore.inactivityState = updatedState
+            if (!movementDetected && updatedState.sedentaryStart != null && elapsedMinutes > 0) {
+                historyRepository.addSedentaryMinutesSample(
+                    LocalDate.now(ZoneId.systemDefault()),
+                    minutes = elapsedMinutes.toInt()
+                )
+            }
 
             if (decision.shouldRemind) {
                 val scheduler = ReminderScheduler(applicationContext)
                 scheduler.ensureChannel()
                 scheduler.sendReminder()
-                HistoryRepository(applicationContext).recordReminderSent(
+                historyRepository.recordReminderSent(
                     LocalDate.now(ZoneId.systemDefault())
                 )
             }

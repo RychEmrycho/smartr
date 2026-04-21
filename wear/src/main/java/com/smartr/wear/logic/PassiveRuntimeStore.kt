@@ -1,5 +1,7 @@
 package com.smartr.wear.logic
 
+import java.time.Instant
+
 object PassiveRuntimeStore {
     @Volatile
     var inactivityState: InactivityState = InactivityState(
@@ -10,4 +12,7 @@ object PassiveRuntimeStore {
 
     @Volatile
     var lastDailySteps: Long? = null
+
+    @Volatile
+    var lastPassiveCallbackAt: Instant? = null
 }

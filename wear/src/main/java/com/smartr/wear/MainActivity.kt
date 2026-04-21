@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -22,13 +24,20 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.smartr.wear.data.SettingsRepository
+import com.smartr.wear.data.history.HistoryRepository
+import com.smartr.wear.logic.BehaviorInsightsEngine
+import com.smartr.wear.logic.PassiveRuntimeStore
 import com.smartr.wear.worker.PassiveRegistrationWorker
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val settingsRepository = SettingsRepository(applicationContext)
+        val historyRepository = HistoryRepository(applicationContext)
 
         lifecycleScope.launch {
             settingsRepository.ensureDefaults()
@@ -41,7 +50,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = SettingsRepository.DEFAULTS)
+            val summaries by historyRepository.summaries().collectAsState(initial = emptyList())
+            val insightsEngine = remember { BehaviorInsightsEngine() }
+            val snapshot = insightsEngine.build(summaries)
             val scope = rememberCoroutineScope()
+            val nowTick by produceState(initialValue = Instant.now()) {
+                while (true) {
+                    value = Instant.now()
+                    delay(30_000)
+                }
+            }
+            val lastUpdateText = PassiveRuntimeStore.lastPassiveCallbackAt?.let {
+                val minutes = Duration.between(it, nowTick).toMinutes().coerceAtLeast(0)
+                "Last passive update: ${minutes}m ago"
+            } ?: "Last passive update: waiting"
             MaterialTheme {
                 Column(
                     modifier = Modifier
@@ -99,6 +121,10 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     ) { Text("End +1h") }
+                    Text("Avg sit: ${snapshot.averageSedentaryMinutes} min")
+                    Text("Reminders: ${snapshot.totalReminders}")
+                    Text("Response: ${snapshot.reminderResponseRate}%")
+                    Text(lastUpdateText)
                 }
             }
         }

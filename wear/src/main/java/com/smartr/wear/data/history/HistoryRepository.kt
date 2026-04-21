@@ -21,4 +21,30 @@ class HistoryRepository(context: Context) {
             )
         )
     }
+
+    suspend fun recordReminderAcknowledged(date: LocalDate) {
+        val key = date.toString()
+        val existing = dao.findByDate(key)
+        dao.upsert(
+            DailySummary(
+                dateIso = key,
+                sedentaryMinutes = existing?.sedentaryMinutes ?: 0,
+                remindersSent = existing?.remindersSent ?: 0,
+                remindersAcknowledged = (existing?.remindersAcknowledged ?: 0) + 1
+            )
+        )
+    }
+
+    suspend fun addSedentaryMinutesSample(date: LocalDate, minutes: Int) {
+        val key = date.toString()
+        val existing = dao.findByDate(key)
+        dao.upsert(
+            DailySummary(
+                dateIso = key,
+                sedentaryMinutes = (existing?.sedentaryMinutes ?: 0) + minutes.coerceAtLeast(0),
+                remindersSent = existing?.remindersSent ?: 0,
+                remindersAcknowledged = existing?.remindersAcknowledged ?: 0
+            )
+        )
+    }
 }
