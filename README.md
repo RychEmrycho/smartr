@@ -24,7 +24,10 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 
 ### ⚙️ Deep Customization
 - **Intelligent Quiet Hours**: Suppress notifications during sleep or focus time.
-- **Granular Thresholds**: Customize sit limits (15-240m) and reminder intervals.
+- **Flexible Time Units**: Unified settings engine allowing seconds, minutes, or hours independently.
+- **Manual "Mark as Done"**: Log a break manually from the watch to reset timers instantly.
+- **Visual Data**: Sparklines and mini-charts directly on the watch dashboard.
+- **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores.
 - **Dynamic Theming**: Support for dark/light modes and Wear OS 5 dynamic color schemes.
 
 ---
@@ -33,19 +36,13 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 
 Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
-### 📍 Phase 1: UX Power (Current Focus)
-- [ ] **Flexible Time Units**: Unified settings engine allowing seconds, minutes, or hours independently.
-- [ ] **Manual "Mark as Done"**: Log a break manually from the watch to reset timers instantly.
-- [ ] **Visual Data**: Sparklines and mini-charts directly on the watch dashboard.
-- [ ] **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores (Optimized for **Oppo Watch X2**).
-
-### 📱 Phase 2: The Companion Hub
+### 📱 Phase 1: The Companion Hub (Current Focus)
 - [ ] **S23 Ultra Hub**: A rich mobile app for long-term data visualization (weekly/monthly/yearly).
 - [ ] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
 - [ ] **Live Status**: See your current "Sitting Time" from a persistent notification on your phone.
 - [ ] **Phone Widgets**: Home screen shortcuts for quick logging and status checks.
 
-### 🏥 Phase 3: Health Intelligence
+### 🏥 Phase 2: Health Intelligence
 - [ ] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
 - [ ] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
@@ -63,12 +60,20 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
 ---
 
+## 📱 Testing Devices
+
+Smartr is rigorously tested on flagship hardware to ensure performance and sensor accuracy:
+
+*   **Watch**: Oppo Watch X2 (Wear OS 5 / API 35)
+*   **Phone**: Samsung Galaxy S23 Ultra (Android 14)
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Android Studio Ladybug (or newer)
 - Wear OS 4.0+ Device/Emulator
-- (Recommended) Physical device like **Oppo Watch X2** or **Samsung Galaxy Watch** for sensor testing.
 
 ### Build & Run
 1. Clone the repository.
