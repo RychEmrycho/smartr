@@ -36,11 +36,10 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 
 Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
-### 📱 Phase 1: The Companion Hub (Current Focus)
-- [ ] **S23 Ultra Hub**: A rich mobile app for long-term data visualization (weekly/monthly/yearly).
+### 📱 Phase 1: Mobile Companion
+- [ ] **Rich Dashboard**: A deep-dive mobile app for long-term health visualization (weekly/monthly/yearly).
 - [ ] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
-- [ ] **Live Status**: See your current "Sitting Time" from a persistent notification on your phone.
-- [ ] **Phone Widgets**: Home screen shortcuts for quick logging and status checks.
+- [ ] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
 ### 🏥 Phase 2: Health Intelligence
 - [ ] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
@@ -62,10 +61,10 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
 ## 📱 Testing Devices
 
-Smartr is rigorously tested on flagship hardware to ensure performance and sensor accuracy:
+Tested on the following hardware to ensure performance and sensor accuracy:
 
 *   **Watch**: Oppo Watch X2 (Wear OS 5 / API 35)
-*   **Phone**: Samsung Galaxy S23 Ultra (Android 14)
+*   **Phone**: Samsung Galaxy S23 Ultra (Android 16)
 
 ---
 
