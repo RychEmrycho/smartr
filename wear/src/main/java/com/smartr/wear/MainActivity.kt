@@ -75,6 +75,7 @@ import com.smartr.wear.data.history.DailySummary
 import com.smartr.wear.data.history.HistoryRepository
 import com.smartr.wear.logic.BehaviorInsightsEngine
 import com.smartr.wear.worker.PassiveRegistrationWorker
+import com.smartr.wear.complication.ComplicationUpdater
 import com.smartr.wear.logic.PassiveRuntimeStore
 import android.widget.Toast
 import java.time.LocalDate
@@ -179,6 +180,7 @@ fun DashboardScreen(
                         PassiveRuntimeStore.reset()
                         scope.launch {
                             historyRepository.recordReminderAcknowledged(LocalDate.now())
+                            ComplicationUpdater.updateAll(context)
                             Toast.makeText(context, "Break recorded!", Toast.LENGTH_SHORT).show()
                         }
                     },

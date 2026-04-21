@@ -5,6 +5,7 @@ import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.DataPointContainer
 import com.smartr.wear.data.SettingsRepository
 import com.smartr.wear.data.history.HistoryRepository
+import com.smartr.wear.complication.ComplicationUpdater
 import com.smartr.wear.logic.InactivityEngine
 import com.smartr.wear.logic.PassiveRuntimeStore
 import com.smartr.wear.reminder.ReminderScheduler
@@ -63,6 +64,7 @@ class PassiveDataService : PassiveListenerService() {
                     LocalDate.now(ZoneId.systemDefault())
                 )
             }
+            ComplicationUpdater.updateAll(applicationContext)
         }
     }
 }

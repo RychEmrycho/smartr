@@ -51,4 +51,6 @@ dependencies {
     ksp("androidx.room:room-compiler:2.8.4")
 
     implementation("androidx.health:health-services-client:1.1.0-rc01")
+    implementation("androidx.wear.watchface:watchface-complications-data:1.3.0")
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.3.0")
 }
