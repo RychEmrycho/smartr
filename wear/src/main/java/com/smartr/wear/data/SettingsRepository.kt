@@ -31,7 +31,8 @@ data class AppSettings(
     val reminderRepeatUnit: TimeIntervalUnit,
     val quietStartHour: Int,
     val quietEndHour: Int,
-    val theme: ThemePreference
+    val theme: ThemePreference,
+    val isSleeping: Boolean = false
 )
 
 enum class ThemePreference {
@@ -55,6 +56,7 @@ class SettingsRepository(private val context: Context) {
         private val QUIET_START_HOUR = intPreferencesKey("quiet_start_hour")
         private val QUIET_END_HOUR = intPreferencesKey("quiet_end_hour")
         private val THEME_PREFERENCE = intPreferencesKey("theme_preference")
+        private val IS_SLEEPING = androidx.datastore.preferences.core.booleanPreferencesKey("is_sleeping")
 
         val DEFAULTS = AppSettings(
             sitThresholdValue = 45,
@@ -63,7 +65,8 @@ class SettingsRepository(private val context: Context) {
             reminderRepeatUnit = TimeIntervalUnit.MINUTES,
             quietStartHour = 22,
             quietEndHour = 6,
-            theme = ThemePreference.FOLLOW_SYSTEM
+            theme = ThemePreference.FOLLOW_SYSTEM,
+            isSleeping = false
         )
     }
 
@@ -148,6 +151,12 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    suspend fun updateSleepStatus(isSleeping: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[IS_SLEEPING] = isSleeping
+        }
+    }
+
     private fun syncToWear() {
         scope.launch {
             syncManager.syncSettings(settings.first())
@@ -169,7 +178,8 @@ class SettingsRepository(private val context: Context) {
             reminderRepeatUnit = repeatUnit,
             quietStartHour = this[QUIET_START_HOUR] ?: DEFAULTS.quietStartHour,
             quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour,
-            theme = ThemePreference.entries[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal]
+            theme = ThemePreference.entries[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal],
+            isSleeping = this[IS_SLEEPING] ?: DEFAULTS.isSleeping
         )
     }
 }

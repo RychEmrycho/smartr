@@ -28,32 +28,83 @@ import com.smartr.mobile.logic.BehaviorInsightsEngine
 import com.smartr.mobile.logic.InsightSnapshot
 import com.smartr.mobile.ui.components.TrendChart
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.health.connect.client.PermissionController
+import com.smartr.mobile.data.health.HealthConnectManager
+import androidx.work.*
+import com.smartr.mobile.service.SleepDetectionWorker
+import java.util.concurrent.TimeUnit
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val settingsRepository = MobileSettingsRepository(applicationContext)
         val historyRepository = MobileHistoryRepository(applicationContext)
+        val healthManager = HealthConnectManager(applicationContext)
         val engine = BehaviorInsightsEngine()
 
         setContent {
             val settings by settingsRepository.watchSettings.collectAsState(initial = MobileSettingsRepository.DEFAULTS)
             val history by historyRepository.summaries(30).collectAsState(initial = emptyList())
             val insight = remember(history) { engine.build(history) }
+            
+            var hasHealthPermissions by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                hasHealthPermissions = healthManager.hasAllPermissions()
+                if (hasHealthPermissions) {
+                    scheduleSleepWorker()
+                }
+            }
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                PermissionController.createRequestPermissionResultContract()
+            ) { granted: Set<String> ->
+                hasHealthPermissions = granted.containsAll(healthManager.permissions)
+                if (hasHealthPermissions) {
+                    scheduleSleepWorker()
+                }
+            }
 
             SmartrTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DashboardScreen(insight, history.map { it.sedentaryMinutes }.reversed(), settings)
+                    DashboardScreen(
+                        insight = insight,
+                        trend = history.map { it.sedentaryMinutes }.reversed(),
+                        settings = settings,
+                        hasHealthPermissions = hasHealthPermissions,
+                        onConnectHealth = {
+                            permissionLauncher.launch(healthManager.permissions)
+                        }
+                    )
                 }
             }
         }
     }
+
+    private fun scheduleSleepWorker() {
+        val request = PeriodicWorkRequestBuilder<SleepDetectionWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_REQUIRED).build())
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "sleep_detection",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
 }
 
 @Composable
-fun DashboardScreen(insight: InsightSnapshot, trend: List<Int>, settings: WatchSettings) {
+fun DashboardScreen(
+    insight: InsightSnapshot,
+    trend: List<Int>,
+    settings: WatchSettings,
+    hasHealthPermissions: Boolean,
+    onConnectHealth: () -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(24.dp),
@@ -61,6 +112,12 @@ fun DashboardScreen(insight: InsightSnapshot, trend: List<Int>, settings: WatchS
     ) {
         item {
             HeaderSection()
+        }
+
+        if (!hasHealthPermissions) {
+            item {
+                HealthConnectPrompt(onConnectHealth)
+            }
         }
 
         item {
@@ -259,6 +316,42 @@ fun SettingRowLite(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun HealthConnectPrompt(onConnect: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        shape = RoundedCornerShape(24.dp),
+        onClick = onConnect
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.HealthAndSafety,
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    "Connect Health Intelligence",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Enable sleep awareness and data syncing.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
     }
 }
 

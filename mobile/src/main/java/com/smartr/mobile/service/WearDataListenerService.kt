@@ -53,9 +53,22 @@ class WearDataListenerService : WearableListenerService() {
 
                 Log.d("WearDataListener", "Received ${entities.size} history summaries")
 
+                val healthManager = com.smartr.mobile.data.health.HealthConnectManager(applicationContext)
                 val historyRepository = com.smartr.mobile.data.history.MobileHistoryRepository(applicationContext)
                 scope.launch {
                     historyRepository.recordSummaries(entities)
+
+                    // Export most recent summary to Health Connect
+                    entities.firstOrNull()?.let { summary ->
+                        if (summary.sedentaryMinutes > 0) {
+                            val now = java.time.Instant.now()
+                            healthManager.writeSedentarySession(
+                                startTime = now.minusSeconds(summary.sedentaryMinutes * 60L),
+                                endTime = now,
+                                minutes = summary.sedentaryMinutes
+                            )
+                        }
+                    }
                 }
             }
         }

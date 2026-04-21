@@ -33,8 +33,9 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 ### 📱 Mobile Hub
 - **Premium Dashboard**: Material 3 dashboard with wellness gauges and streak tracking.
 - **Interactive Trends**: 30-day activity charts using high-fidelity `Canvas` drawing.
-- **Real-time Sync**: Automatic mirroring of health history and settings from watch to phone.
-- **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
+- ✅ **Real-time Sync**: Automatic mirroring of health history and settings from watch to phone.
+- ✅ **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
+- ✅ **Health Connect Intelligence**: Automated sleep awareness and cross-platform activity synchronization.
 
 ---
 
@@ -47,10 +48,14 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 - [x] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
 - [x] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
-### 🏥 Phase 2: Health Intelligence (Current Focus)
-- [ ] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
-- [ ] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
+### 🏥 Phase 2: Health Intelligence
+- [x] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
+- [x] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
+- [x] **Sedentary Export**: Automatically write sitting periods back to the health ecosystem as Activity sessions.
+
+### 🚀 Phase 3: The Polish & AI (Next)
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
+- [ ] **Smart notification**: Custom haptics and sounds for different health events.
 
 ---
 

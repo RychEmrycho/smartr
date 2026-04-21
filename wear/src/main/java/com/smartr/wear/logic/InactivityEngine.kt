@@ -32,6 +32,10 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
             ) to InactivityDecision(false, "movement_reset")
         }
 
+        if (settings.isSleeping) {
+            return state to InactivityDecision(false, "user_sleeping")
+        }
+
         if (isQuietHours(now, settings)) {
             val quietState = if (state.sedentaryStart == null) state.copy(sedentaryStart = now) else state
             return quietState to InactivityDecision(false, "quiet_hours")

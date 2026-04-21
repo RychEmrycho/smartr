@@ -15,7 +15,8 @@ data class WatchSettings(
     val repeatValue: Int,
     val repeatUnit: TimeIntervalUnit,
     val quietStartHour: Int,
-    val quietEndHour: Int
+    val quietEndHour: Int,
+    val isSleeping: Boolean = false
 )
 
 class MobileSettingsRepository(private val context: Context) {
@@ -26,8 +27,9 @@ class MobileSettingsRepository(private val context: Context) {
         private val REPEAT_UNIT = intPreferencesKey("repeat_unit")
         private val QUIET_START = intPreferencesKey("quiet_start")
         private val QUIET_END = intPreferencesKey("quiet_end")
+        private val IS_SLEEPING = androidx.datastore.preferences.core.booleanPreferencesKey("is_sleeping")
 
-        val DEFAULTS = WatchSettings(45, TimeIntervalUnit.MINUTES, 20, TimeIntervalUnit.MINUTES, 22, 6)
+        val DEFAULTS = WatchSettings(45, TimeIntervalUnit.MINUTES, 20, TimeIntervalUnit.MINUTES, 22, 6, false)
     }
 
     val watchSettings: Flow<WatchSettings> = context.dataStore.data.map { prefs ->
@@ -37,7 +39,8 @@ class MobileSettingsRepository(private val context: Context) {
             repeatValue = prefs[REPEAT_VALUE] ?: DEFAULTS.repeatValue,
             repeatUnit = TimeIntervalUnit.entries[prefs[REPEAT_UNIT] ?: DEFAULTS.repeatUnit.ordinal],
             quietStartHour = prefs[QUIET_START] ?: DEFAULTS.quietStartHour,
-            quietEndHour = prefs[QUIET_END] ?: DEFAULTS.quietEndHour
+            quietEndHour = prefs[QUIET_END] ?: DEFAULTS.quietEndHour,
+            isSleeping = prefs[IS_SLEEPING] ?: DEFAULTS.isSleeping
         )
     }
 
@@ -56,6 +59,12 @@ class MobileSettingsRepository(private val context: Context) {
             prefs[REPEAT_UNIT] = repeatUnit
             prefs[QUIET_START] = quietStart
             prefs[QUIET_END] = quietEnd
+        }
+    }
+
+    suspend fun updateSleepStatus(isSleeping: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[IS_SLEEPING] = isSleeping
         }
     }
 }
