@@ -30,3 +30,13 @@ jobs:
 
       - name: Build mobile debug APK
         run: ./gradlew :mobile:assembleDebug
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smartr-debug-apks
+          path: |
+            wear/build/outputs/apk/debug/*.apk
+            mobile/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
