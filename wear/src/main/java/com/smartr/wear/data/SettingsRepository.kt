@@ -18,8 +18,13 @@ data class AppSettings(
     val sitThresholdMinutes: Int,
     val reminderRepeatMinutes: Int,
     val quietStartHour: Int,
-    val quietEndHour: Int
+    val quietEndHour: Int,
+    val theme: ThemePreference
 )
+
+enum class ThemePreference {
+    FOLLOW_SYSTEM, LIGHT, DARK
+}
 
 class SettingsRepository(private val context: Context) {
     private val syncManager = WearSyncManager(context)
@@ -30,12 +35,14 @@ class SettingsRepository(private val context: Context) {
         private val REPEAT_MINUTES = intPreferencesKey("repeat_minutes")
         private val QUIET_START_HOUR = intPreferencesKey("quiet_start_hour")
         private val QUIET_END_HOUR = intPreferencesKey("quiet_end_hour")
+        private val THEME_PREFERENCE = intPreferencesKey("theme_preference")
 
         val DEFAULTS = AppSettings(
             sitThresholdMinutes = 45,
             reminderRepeatMinutes = 20,
             quietStartHour = 22,
-            quietEndHour = 6
+            quietEndHour = 6,
+            theme = ThemePreference.FOLLOW_SYSTEM
         )
     }
 
@@ -56,6 +63,9 @@ class SettingsRepository(private val context: Context) {
             }
             if (!prefs.contains(QUIET_END_HOUR)) {
                 prefs[QUIET_END_HOUR] = DEFAULTS.quietEndHour
+            }
+            if (!prefs.contains(THEME_PREFERENCE)) {
+                prefs[THEME_PREFERENCE] = DEFAULTS.theme.ordinal
             }
         }
     }
@@ -97,6 +107,12 @@ class SettingsRepository(private val context: Context) {
         syncToWear()
     }
 
+    suspend fun updateTheme(theme: ThemePreference) {
+        context.dataStore.edit { prefs ->
+            prefs[THEME_PREFERENCE] = theme.ordinal
+        }
+    }
+
     private fun syncToWear() {
         scope.launch {
             syncManager.syncSettings(settings.first())
@@ -107,6 +123,7 @@ class SettingsRepository(private val context: Context) {
         sitThresholdMinutes = this[SIT_THRESHOLD_MINUTES] ?: DEFAULTS.sitThresholdMinutes,
         reminderRepeatMinutes = this[REPEAT_MINUTES] ?: DEFAULTS.reminderRepeatMinutes,
         quietStartHour = this[QUIET_START_HOUR] ?: DEFAULTS.quietStartHour,
-        quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour
+        quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour,
+        theme = ThemePreference.values()[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal]
     )
 }

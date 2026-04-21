@@ -2,50 +2,87 @@ package com.smartr.wear
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.items
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import androidx.wear.compose.material3.AppCard
+import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.CardDefaults
+import androidx.wear.compose.material3.CircularProgressIndicator
+import androidx.wear.compose.material3.ColorScheme
+import androidx.wear.compose.material3.FilledTonalButton
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.ProgressIndicatorDefaults
+import androidx.wear.compose.material3.RadioButton
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.Stepper
+import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TimePicker
+import androidx.wear.compose.material3.TimeText
+import androidx.wear.compose.material3.TitleCard
+import androidx.wear.compose.material3.dynamicColorScheme
+import androidx.wear.compose.navigation.SwipeDismissableNavHost
+import androidx.wear.compose.navigation.composable
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.wear.compose.material3.MaterialTheme
-import androidx.wear.compose.material3.Text
-import androidx.wear.compose.material3.Button
-import androidx.wear.compose.material3.FilledTonalButton
-import androidx.wear.compose.material3.Card
-import androidx.wear.compose.material3.AppCard
-import androidx.wear.compose.material3.ListHeader
-import androidx.wear.compose.material3.TitleCard
-import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.TimeText
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
+import com.smartr.wear.data.AppSettings
 import com.smartr.wear.data.SettingsRepository
+import com.smartr.wear.data.ThemePreference
+import com.smartr.wear.data.history.DailySummary
 import com.smartr.wear.data.history.HistoryRepository
 import com.smartr.wear.logic.BehaviorInsightsEngine
-import com.smartr.wear.logic.PassiveRuntimeStore
 import com.smartr.wear.worker.PassiveRegistrationWorker
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.Instant
+import java.time.LocalTime
+
+enum class SettingType {
+    NONE, SIT_LIMIT, REMINDER_REPEAT, QUIET_START, QUIET_END, THEME
+}
+
+sealed class Screen(val route: String) {
+    object Dashboard : Screen("dashboard")
+    object History : Screen("history")
+    object Settings : Screen("settings")
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,134 +103,328 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = SettingsRepository.DEFAULTS)
             val summaries by historyRepository.summaries().collectAsState(initial = emptyList())
-            val insightsEngine = remember { BehaviorInsightsEngine() }
-            val snapshot = insightsEngine.build(summaries)
-            val scope = rememberCoroutineScope()
-            val nowTick by produceState(initialValue = Instant.now()) {
-                while (true) {
-                    value = Instant.now()
-                    delay(30_000)
+            val navController = rememberSwipeDismissableNavController()
+            
+            val context = LocalContext.current
+            val colorScheme = when (settings.theme) {
+                ThemePreference.DARK -> ColorScheme()
+                ThemePreference.LIGHT -> ColorScheme() // Wear OS is dark-only by design, but we can use default ColorScheme()
+                ThemePreference.FOLLOW_SYSTEM -> dynamicColorScheme(context) ?: ColorScheme()
+            }
+
+            MaterialTheme(colorScheme = colorScheme) {
+                AppScaffold {
+                    SwipeDismissableNavHost(
+                        navController = navController,
+                        startDestination = Screen.Dashboard.route
+                    ) {
+                        composable(Screen.Dashboard.route) {
+                            DashboardScreen(summaries, navController)
+                        }
+                        composable(Screen.History.route) {
+                            HistoryScreen(summaries)
+                        }
+                        composable(Screen.Settings.route) {
+                            SettingsScreen(settings, settingsRepository)
+                        }
+                    }
                 }
             }
-            val lastUpdateText = PassiveRuntimeStore.lastPassiveCallbackAt?.let {
-                val minutes = Duration.between(it, nowTick).toMinutes().coerceAtLeast(0)
-                "Last update: ${minutes}m ago"
-            } ?: "Waiting for data..."
+        }
+    }
+}
 
-            MaterialTheme {
-                val listState = rememberScalingLazyListState()
-                Scaffold(
-                    timeText = { TimeText() }
-                ) {
-                    ScalingLazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            top = 32.dp,
-                            start = 16.dp,
-                            end = 16.dp,
-                            bottom = 32.dp
-                        ),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        item {
-                            ListHeader {
-                                Text("Smartr", style = MaterialTheme.typography.titleMedium)
+@Composable
+fun DashboardScreen(
+    summaries: List<DailySummary>,
+    navController: NavHostController
+) {
+    val insightsEngine = remember { BehaviorInsightsEngine() }
+    val snapshot = insightsEngine.build(summaries)
+    val listState = rememberScalingLazyListState()
+
+    ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(top = 32.dp, start = 16.dp, end = 16.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
+                ListHeader { Text("Smartr", style = MaterialTheme.typography.titleMedium) }
+            }
+
+            item {
+                val scoreColor = when {
+                    snapshot.wellnessScore > 80 -> colorResource(R.color.wellness_high)
+                    snapshot.wellnessScore > 50 -> colorResource(R.color.wellness_mid)
+                    else -> colorResource(R.color.wellness_low)
+                }
+                TitleCard(
+                    onClick = { },
+                    title = { Text("Wellness Score") },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        titleColor = scoreColor
+                    ),
+                    subtitle = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(
+                                    progress = { snapshot.wellnessScore / 100f },
+                                    modifier = Modifier.fillMaxSize(),
+                                    colors = ProgressIndicatorDefaults.colors(
+                                        indicatorColor = scoreColor,
+                                        trackColor = scoreColor.copy(alpha = 0.2f)
+                                    ),
+                                    strokeWidth = 4.dp
+                                )
+                                Text(
+                                    text = "${snapshot.wellnessScore}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
-                        }
-
-                        // Insights Card
-                        item {
-                            AppCard(
-                                onClick = { },
-                                appName = { Text("Daily Insight") },
-                                time = { },
-                                title = { Text("Activity Summary") },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column {
-                                    Text("Avg sit: ${snapshot.averageSedentaryMinutes}m", style = MaterialTheme.typography.bodySmall)
-                                    Text("Response: ${snapshot.reminderResponseRate}%", style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-                        }
-
-                        item {
-                            ListHeader {
-                                Text("Settings", style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
-
-                        // Sit Limit Setting
-                        item {
-                            TitleCard(
-                                onClick = { },
-                                title = { Text("Sit Limit") },
-                                subtitle = { Text("${settings.sitThresholdMinutes} minutes") }
-                            ) {
-                                androidx.compose.foundation.layout.Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilledTonalButton(
-                                        onClick = { scope.launch { settingsRepository.updateSitThreshold(settings.sitThresholdMinutes - 5) } },
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text("-5") }
-                                    FilledTonalButton(
-                                        onClick = { scope.launch { settingsRepository.updateSitThreshold(settings.sitThresholdMinutes + 5) } },
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text("+5") }
-                                }
-                            }
-                        }
-
-                        // Repeat Setting
-                        item {
-                            TitleCard(
-                                onClick = { },
-                                title = { Text("Reminder Every") },
-                                subtitle = { Text("${settings.reminderRepeatMinutes} minutes") }
-                            ) {
-                                FilledTonalButton(
-                                    onClick = { scope.launch { settingsRepository.updateReminderRepeat(settings.reminderRepeatMinutes + 5) } },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text("+5 Minutes") }
-                            }
-                        }
-
-                        // Quiet Hours
-                        item {
-                            TitleCard(
-                                onClick = { },
-                                title = { Text("Quiet Hours") },
-                                subtitle = { Text("${settings.quietStartHour}:00 - ${settings.quietEndHour}:00") }
-                            ) {
-                                androidx.compose.foundation.layout.Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilledTonalButton(
-                                        onClick = { scope.launch { settingsRepository.updateQuietStartHour((settings.quietStartHour + 1) % 24) } },
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text("Start") }
-                                    FilledTonalButton(
-                                        onClick = { scope.launch { settingsRepository.updateQuietEndHour((settings.quietEndHour + 1) % 24) } },
-                                        modifier = Modifier.weight(1f)
-                                    ) { Text("End") }
-                                }
-                            }
-                        }
-
-                        item {
+                            Spacer(Modifier.width(8.dp))
                             Text(
-                                text = lastUpdateText,
-                                style = MaterialTheme.typography.labelSmall,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = 8.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "🔥 ${snapshot.currentStreak} day streak",
+                                style = MaterialTheme.typography.labelSmall
                             )
                         }
                     }
+                ) {
+                    Text("You're doing great! Keep moving.", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            item {
+                AppCard(
+                    onClick = { },
+                    appName = { Text("Stats") },
+                    time = { },
+                    title = { Text("Activity Insights") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        Text("Avg sit: ${snapshot.averageSedentaryMinutes}m", style = MaterialTheme.typography.bodySmall)
+                        Text("Response: ${snapshot.reminderResponseRate}%", style = MaterialTheme.typography.bodySmall)
+                        Text("Reminders: ${snapshot.totalReminders}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            item {
+                Button(
+                    onClick = { navController.navigate(Screen.History.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.filledTonalButtonColors()
+                ) {
+                    Text("View History")
+                }
+            }
+
+            item {
+                Button(
+                    onClick = { navController.navigate(Screen.Settings.route) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.filledTonalButtonColors()
+                ) {
+                    Text("Settings")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HistoryScreen(summaries: List<DailySummary>) {
+    val listState = rememberScalingLazyListState()
+    ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(top = 32.dp, start = 16.dp, end = 16.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item { ListHeader { Text("History", style = MaterialTheme.typography.titleMedium) } }
+            
+            if (summaries.isEmpty()) {
+                item { Text("No history yet", style = MaterialTheme.typography.bodyMedium) }
+            }
+
+            items(summaries.take(10)) { summary ->
+                TitleCard(
+                    onClick = { },
+                    title = { Text(summary.dateIso) },
+                    subtitle = { Text("${summary.sedentaryMinutes}m sitting") }
+                ) {
+                    Text("${summary.remindersSent} reminders", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+
+            item {
+                Text(
+                    "Full history available on your phone.",
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(
+    settings: AppSettings,
+    repository: SettingsRepository
+) {
+    var activeEditor by remember { mutableStateOf(SettingType.NONE) }
+    val scope = rememberCoroutineScope()
+    val listState = rememberScalingLazyListState()
+
+    if (activeEditor != SettingType.NONE) {
+        BackHandler { activeEditor = SettingType.NONE }
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (activeEditor) {
+                SettingType.SIT_LIMIT -> {
+                    Stepper(
+                        value = settings.sitThresholdMinutes,
+                        onValueChange = { scope.launch { repository.updateSitThreshold(it) } },
+                        valueProgression = 15..240 step 15,
+                        increaseIcon = { Icon(Icons.Default.Add, "Increase") },
+                        decreaseIcon = { Icon(Icons.Default.Remove, "Decrease") }
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Sit Limit", style = MaterialTheme.typography.labelMedium)
+                            Text("${settings.sitThresholdMinutes}", style = MaterialTheme.typography.displayMedium)
+                            Text("minutes", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                SettingType.REMINDER_REPEAT -> {
+                    Stepper(
+                        value = settings.reminderRepeatMinutes,
+                        onValueChange = { scope.launch { repository.updateReminderRepeat(it) } },
+                        valueProgression = 5..120 step 5,
+                        increaseIcon = { Icon(Icons.Default.Add, "Increase") },
+                        decreaseIcon = { Icon(Icons.Default.Remove, "Decrease") }
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Reminder", style = MaterialTheme.typography.labelMedium)
+                            Text("${settings.reminderRepeatMinutes}", style = MaterialTheme.typography.displayMedium)
+                            Text("minutes", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+                SettingType.QUIET_START -> {
+                    TimePicker(
+                        initialTime = LocalTime.of(settings.quietStartHour, 0),
+                        onTimePicked = {
+                            scope.launch {
+                                repository.updateQuietStartHour(it.hour)
+                                activeEditor = SettingType.NONE
+                            }
+                        }
+                    )
+                }
+                SettingType.QUIET_END -> {
+                    TimePicker(
+                        initialTime = LocalTime.of(settings.quietEndHour, 0),
+                        onTimePicked = {
+                            scope.launch {
+                                repository.updateQuietEndHour(it.hour)
+                                activeEditor = SettingType.NONE
+                            }
+                        }
+                    )
+                }
+                SettingType.THEME -> {
+                    ScalingLazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        item { ListHeader { Text("Theme") } }
+                        ThemePreference.entries.forEach { theme ->
+                            item {
+                                TitleCard(
+                                    onClick = { 
+                                        scope.launch { 
+                                            repository.updateTheme(theme)
+                                            activeEditor = SettingType.NONE
+                                        } 
+                                    },
+                                    title = { Text(theme.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                                ) {
+                                    RadioButton(
+                                        selected = settings.theme == theme,
+                                        onSelect = {
+                                            scope.launch {
+                                                repository.updateTheme(theme)
+                                                activeEditor = SettingType.NONE
+                                            }
+                                        },
+                                        label = { Text("Select") }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
+    } else {
+        ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
+            ScalingLazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+                contentPadding = PaddingValues(top = 32.dp, start = 16.dp, end = 16.dp, bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item { ListHeader { Text("Settings") } }
+
+                item {
+                    TitleCard(
+                        onClick = { activeEditor = SettingType.SIT_LIMIT },
+                        title = { Text("Sit Limit") },
+                        subtitle = { Text("${settings.sitThresholdMinutes}m") }
+                    )
+                }
+
+                item {
+                    TitleCard(
+                        onClick = { activeEditor = SettingType.REMINDER_REPEAT },
+                        title = { Text("Reminder Every") },
+                        subtitle = { Text("${settings.reminderRepeatMinutes}m") }
+                    )
+                }
+
+                item {
+                    TitleCard(
+                        onClick = { },
+                        title = { Text("Quiet Hours") },
+                        subtitle = { Text("${settings.quietStartHour}:00 - ${settings.quietEndHour}:00") }
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = { activeEditor = SettingType.QUIET_START },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Start") }
+                            FilledTonalButton(
+                                onClick = { activeEditor = SettingType.QUIET_END },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("End") }
+                        }
+                    }
+                }
+
+                item {
+                    TitleCard(
+                        onClick = { activeEditor = SettingType.THEME },
+                        title = { Text("Theme") },
+                        subtitle = { Text(settings.theme.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    )
                 }
             }
         }

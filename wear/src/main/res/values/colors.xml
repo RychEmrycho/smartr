@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wellness_high">#00E676</color>
+    <color name="wellness_mid">#FFD600</color>
+    <color name="wellness_low">#FF5252</color>
+</resources>
