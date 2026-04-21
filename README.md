@@ -1,105 +1,98 @@
-# Smartr
+# Smartr ⌚️
 
-Smartr is a Wear OS app focused on sedentary behavior coaching:
+[![Android](https://img.shields.io/badge/Platform-Wear%20OS%204+-3DDC84?logo=android&logoColor=white)](https://developer.android.com/wear)
+[![Kotlin](https://img.shields.io/badge/Language-Kotlin%202.0-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
-- tracks prolonged inactivity from passive health/sensor updates
-- reminds users to pause, hydrate, and stretch
-- suppresses reminders during configured quiet hours
-- records reminder and behavior history for basic insights
+**Smartr** is a premium, open-source sedentary behavior coaching platform for Wear OS. Unlike passive step trackers, Smartr focuses on *active habit correction* by monitoring prolonged inactivity and providing intelligent nudges to move, stretch, and hydrate.
 
-This repo currently contains a Wear-first MVP plus a lightweight mobile companion stub.
+Designed with a "Wear-First" philosophy, it leverages low-power passive health sensors to ensure minimal battery impact while delivering maximum health value.
 
-## Why the name "Smartr"?
+---
 
-`Smartr` is intentionally named as:
+## ✨ Key Features (Implemented)
 
-- a compact form that sounds like **"smarter"**
-- a nod to the app's core purpose: **smart reminder**
+### 🩺 Wellness Logic
+- **Wellness Score (0-100)**: A proprietary algorithm that calculates your daily movement efficiency based on sitting duration and reminder responsiveness.
+- **Dynamic Streaks**: Track consecutive days of meeting your movement goals.
+- **Passive Monitoring**: Uses Wear Health Services to track inactivity in the background without draining battery.
 
-So the name reflects both the product personality and objective: helping users build smarter daily habits through timely reminders.
+### 🎨 Premium Wear UI
+- **Material 3 Design**: Fully compliant with the latest Wear OS Design System.
+- **Activity Insights**: At-a-glance dashboard showing Average Sitting Time, Reminder Response Rate, and Activity Trends.
+- **On-Watch History**: Rapid access to the last 10 days of behavior summaries.
 
-## Modules
+### ⚙️ Deep Customization
+- **Intelligent Quiet Hours**: Suppress notifications during sleep or focus time.
+- **Granular Thresholds**: Customize sit limits (15-240m) and reminder intervals.
+- **Dynamic Theming**: Support for dark/light modes and Wear OS 5 dynamic color schemes.
 
-- `wear` - main Wear OS app (MVP implementation lives here)
-- `mobile` - companion Android app placeholder (phase 2)
+---
 
-## Implemented MVP features
+## 🗺 Roadmap
 
-- Passive monitoring registration worker:
-  - `wear/.../worker/PassiveRegistrationWorker.kt`
-- Passive listener service:
-  - `wear/.../service/PassiveDataService.kt`
-- Inactivity engine with configurable logic:
-  - sit threshold
-  - repeat reminder interval
-  - quiet hours
-- On-watch settings persistence via DataStore:
-  - `wear/.../data/SettingsRepository.kt`
-- Reminder notifications with acknowledge action:
-  - `wear/.../reminder/ReminderScheduler.kt`
-  - `wear/.../reminder/ReminderActionReceiver.kt`
-- History tracking via Room:
-  - reminders sent
-  - reminders acknowledged
-  - interval-based sedentary minute accumulation
-- Basic insights shown in Wear UI:
-  - average sedentary minutes
-  - total reminders
-  - reminder response rate
-  - last passive callback age
+Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
-## Tech stack
+### 📍 Phase 1: UX Power (Current Focus)
+- [ ] **Flexible Time Units**: Unified settings engine allowing seconds, minutes, or hours independently.
+- [ ] **Manual "Mark as Done"**: Log a break manually from the watch to reset timers instantly.
+- [ ] **Visual Data**: Sparklines and mini-charts directly on the watch dashboard.
+- [ ] **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores (Optimized for **Oppo Watch X2**).
 
-- Kotlin
-- Jetpack Compose for Wear OS
-- Wear Health Services (`PassiveMonitoringClient`)
-- WorkManager
-- DataStore Preferences
-- Room
+### 📱 Phase 2: The Companion Hub
+- [ ] **S23 Ultra Hub**: A rich mobile app for long-term data visualization (weekly/monthly/yearly).
+- [ ] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
+- [ ] **Live Status**: See your current "Sitting Time" from a persistent notification on your phone.
+- [ ] **Phone Widgets**: Home screen shortcuts for quick logging and status checks.
 
-## Requirements
+### 🏥 Phase 3: Health Intelligence
+- [ ] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
+- [ ] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
+- [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
 
-- Android Studio (latest stable recommended)
-- JDK 17
-- Wear OS device/emulator (Wear OS 3+)
-- For physical watch testing: permission grants on device (`ACTIVITY_RECOGNITION`, notifications)
+---
 
-## Run in Android Studio
+## 🛠 Tech Stack
 
-1. Open this folder in Android Studio.
-2. Sync Gradle.
-3. Select `wear` run configuration.
-4. Deploy to Wear emulator or watch.
+- **Core**: Kotlin 2.0+, Coroutines, Flow
+- **UI**: Jetpack Compose for Wear OS (Material 3)
+- **Persistence**: Room (History), DataStore (Settings)
+- **Health**: Wear Health Services (PassiveMonitoringClient)
+- **Async**: WorkManager for background registration logic
+- **Navigation**: Swipe-to-dismiss Navigation for Wear
 
-## Build APK
+---
 
-### Option A: Android Studio (easiest)
+## 🚀 Getting Started
 
-- Build > Build Bundle(s) / APK(s) > Build APK(s)
-- Output (debug APK):
-  - `wear/build/outputs/apk/debug/wear-debug.apk`
-  - `mobile/build/outputs/apk/debug/mobile-debug.apk`
+### Prerequisites
+- Android Studio Ladybug (or newer)
+- Wear OS 4.0+ Device/Emulator
+- (Recommended) Physical device like **Oppo Watch X2** or **Samsung Galaxy Watch** for sensor testing.
 
-### Option B: Command line
-
-The project includes a Gradle wrapper, so you can build using:
+### Build & Run
+1. Clone the repository.
+2. Open in Android Studio.
+3. Select the `wear` run configuration.
+4. Deploy to your wearable device.
 
 ```bash
+# Build Debug APKs
 ./gradlew :wear:assembleDebug
 ./gradlew :mobile:assembleDebug
 ```
 
-Release builds:
+---
 
-```bash
-./gradlew :wear:assembleRelease
-./gradlew :mobile:assembleRelease
-```
+## 🤝 Contributing
 
-## Current limitations / next priorities
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct, development setup, and pull request process.
 
-- Improve movement detection robustness beyond `STEPS_DAILY` deltas.
-- Add richer settings UX (sliders/pickers).
-- Add charts/timeline history UI.
-- Add phone sync and optional Health Connect sleep-aware suppression.
-- Add tests for inactivity state machine and reminder cadence.
+---
+
+## 📄 License
+
+Distributed under the GNU GPL v3 License. See `LICENSE` for more information.
+
+---
+*Built with ❤️ for a healthier lifestyle.*
