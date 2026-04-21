@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -77,6 +78,8 @@ import com.smartr.wear.worker.PassiveRegistrationWorker
 import com.smartr.wear.logic.PassiveRuntimeStore
 import android.widget.Toast
 import java.time.LocalDate
+import com.smartr.wear.presentation.component.Sparkline
+import androidx.compose.material.icons.filled.TrendingUp
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
@@ -153,6 +156,11 @@ fun DashboardScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
+    // Extract last 7 days of sedentary minutes for the chart
+    val trendData = remember(summaries) {
+        summaries.takeLast(7).map { it.sedentaryMinutes }
+    }
+
     ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
         ScalingLazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -190,6 +198,7 @@ fun DashboardScreen(
                     snapshot.wellnessScore > 50 -> colorResource(R.color.wellness_mid)
                     else -> colorResource(R.color.wellness_low)
                 }
+
                 TitleCard(
                     onClick = { },
                     title = { Text("Wellness Score") },
@@ -228,17 +237,48 @@ fun DashboardScreen(
             }
 
             item {
+                val scoreColor = when {
+                    snapshot.wellnessScore > 80 -> colorResource(R.color.wellness_high)
+                    snapshot.wellnessScore > 50 -> colorResource(R.color.wellness_mid)
+                    else -> colorResource(R.color.wellness_low)
+                }
+
                 AppCard(
-                    onClick = { },
-                    appName = { Text("Stats") },
-                    time = { },
-                    title = { Text("Activity Insights") },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { navController.navigate(Screen.History.route) },
+                    appName = { Text("Activity Insights") },
+                    appImage = { 
+                        Icon(
+                            Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = scoreColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    title = { Text("7-Day Trend") },
+                    time = { Text("Last 7d") },
                 ) {
                     Column {
-                        Text("Avg sit: ${snapshot.averageSedentaryMinutes}m", style = MaterialTheme.typography.bodySmall)
-                        Text("Response: ${snapshot.reminderResponseRate}%", style = MaterialTheme.typography.bodySmall)
-                        Text("Reminders: ${snapshot.totalReminders}", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "Avg Sedentary: ${snapshot.averageSedentaryMinutes}m",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        if (trendData.size > 1) {
+                            Sparkline(
+                                data = trendData,
+                                color = scoreColor,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp)
+                                    .padding(vertical = 4.dp)
+                            )
+                        } else {
+                            Text(
+                                "Collect more data for chart",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
