@@ -26,7 +26,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build wear debug APK
-        run: gradle :wear:assembleDebug
+        run: ./gradlew :wear:assembleDebug
 
       - name: Build mobile debug APK
-        run: gradle :mobile:assembleDebug
+        run: ./gradlew :mobile:assembleDebug
