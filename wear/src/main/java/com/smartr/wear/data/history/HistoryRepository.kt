@@ -1,13 +1,21 @@
 package com.smartr.wear.data.history
 
 import android.content.Context
+import com.smartr.wear.data.WearSyncManager
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
-class HistoryRepository(context: Context) {
+class HistoryRepository(private val context: Context) {
     private val dao = HistoryDatabase.get(context).dailySummaryDao()
+    private val syncManager = WearSyncManager(context)
 
     fun summaries(): Flow<List<DailySummary>> = dao.latest30Days()
+
+    private suspend fun syncAll() {
+        val latest: List<DailySummary> = summaries().first()
+        syncManager.syncHistory(latest)
+    }
 
     suspend fun recordReminderSent(date: LocalDate) {
         val key = date.toString()
@@ -20,6 +28,7 @@ class HistoryRepository(context: Context) {
                 remindersAcknowledged = existing?.remindersAcknowledged ?: 0
             )
         )
+        syncAll()
     }
 
     suspend fun recordReminderAcknowledged(date: LocalDate) {
@@ -33,6 +42,7 @@ class HistoryRepository(context: Context) {
                 remindersAcknowledged = (existing?.remindersAcknowledged ?: 0) + 1
             )
         )
+        syncAll()
     }
 
     suspend fun addSedentaryMinutesSample(date: LocalDate, minutes: Int) {
@@ -46,5 +56,6 @@ class HistoryRepository(context: Context) {
                 remindersAcknowledged = existing?.remindersAcknowledged ?: 0
             )
         )
+        syncAll()
     }
 }

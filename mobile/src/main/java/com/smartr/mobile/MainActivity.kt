@@ -3,110 +3,49 @@ package com.smartr.mobile
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.smartr.mobile.data.MobileSettingsRepository
+import com.smartr.mobile.data.WatchSettings
+import com.smartr.mobile.data.history.MobileHistoryRepository
+import com.smartr.mobile.logic.BehaviorInsightsEngine
+import com.smartr.mobile.logic.InsightSnapshot
+import com.smartr.mobile.ui.components.TrendChart
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repository = MobileSettingsRepository(applicationContext)
+        val settingsRepository = MobileSettingsRepository(applicationContext)
+        val historyRepository = MobileHistoryRepository(applicationContext)
+        val engine = BehaviorInsightsEngine()
 
         setContent {
-            val settings by repository.watchSettings.collectAsState(initial = MobileSettingsRepository.DEFAULTS)
+            val settings by settingsRepository.watchSettings.collectAsState(initial = MobileSettingsRepository.DEFAULTS)
+            val history by historyRepository.summaries(30).collectAsState(initial = emptyList())
+            val insight = remember(history) { engine.build(history) }
 
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = Color(0xFFD0BCFF),
-                    secondary = Color(0xFFCCC2DC),
-                    tertiary = Color(0xFFEFB8C8)
-                )
-            ) {
+            SmartrTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Smartr",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 32.dp)
-                        )
-                        Text(
-                            text = "Companion App",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(48.dp))
-
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("Watch Status", fontWeight = FontWeight.SemiBold)
-                                    Text("Connected", color = Color(0xFF81C784))
-                                }
-
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
-                                )
-
-                                SettingRow("Sit Limit", "${settings.sitThresholdMinutes} min")
-                                SettingRow("Reminder Every", "${settings.reminderRepeatMinutes} min")
-                                SettingRow("Quiet Hours", "${settings.quietStartHour}:00 - ${settings.quietEndHour}:00")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        Text(
-                            text = "Changes on your watch are synced here automatically.",
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                    }
+                    DashboardScreen(insight, history.map { it.sedentaryMinutes }.reversed(), settings)
                 }
             }
         }
@@ -114,18 +53,227 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun SettingRow(label: String, value: String) {
+fun DashboardScreen(insight: InsightSnapshot, trend: List<Int>, settings: WatchSettings) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(24.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            HeaderSection()
+        }
+
+        item {
+            WellnessScoreCard(insight.wellnessScore)
+        }
+
+        item {
+            StatsGrid(insight)
+        }
+
+        item {
+            TrendSection(trend)
+        }
+
+        item {
+            WatchSettingsCard(settings)
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Last synced: Just now",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun HeaderSection() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+        Column {
+            Text(
+                text = "Smartr",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Health Hub",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Watch, contentDescription = null, tint = Color(0xFF81C784))
+        }
+    }
+}
+
+@Composable
+fun WellnessScoreCard(score: Int) {
+    val scoreColor = when {
+        score >= 80 -> Color(0xFF81C784)
+        score >= 50 -> Color(0xFFFFD54F)
+        else -> Color(0xFFE57373)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        shape = RoundedCornerShape(32.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(
+                    progress = { score / 100f },
+                    modifier = Modifier.size(200.dp),
+                    color = scoreColor,
+                    strokeWidth = 16.dp,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = score.toString(),
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Wellness Score",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatsGrid(insight: InsightSnapshot) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        StatCard(
+            label = "Current Streak",
+            value = "${insight.currentStreak} Days",
+            icon = Icons.Default.Whatshot,
+            color = Color(0xFFFF8A65),
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            label = "Response Rate",
+            value = "${insight.reminderResponseRate}%",
+            icon = Icons.Default.Bolt,
+            color = Color(0xFF64B5F6),
+            modifier = Modifier.weight(1f)
         )
     }
+}
+
+@Composable
+fun StatCard(label: String, value: String, icon: ImageVector, color: Color, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Icon(icon, contentDescription = null, tint = color)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun TrendSection(trend: List<Int>) {
+    Column {
+        Text(
+            text = "Activity Trend (30 Days)",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.2f))
+        ) {
+            TrendChart(
+                data = if (trend.isEmpty()) listOf(0, 0) else trend,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun WatchSettingsCard(settings: WatchSettings) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Sync Settings", style = MaterialTheme.typography.titleSmall)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            val unitLabel = { value: Int, unit: com.smartr.mobile.data.TimeIntervalUnit -> "$value ${unit.name.lowercase()}" }
+            
+            SettingRowLite("Sit Limit", unitLabel(settings.thresholdValue, settings.thresholdUnit))
+            SettingRowLite("Reminder", unitLabel(settings.repeatValue, settings.repeatUnit))
+            SettingRowLite("Quiet Hours", "${settings.quietStartHour}:00 - ${settings.quietEndHour}:00")
+        }
+    }
+}
+
+@Composable
+fun SettingRowLite(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun SmartrTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = darkColorScheme(
+            primary = Color(0xFFD0BCFF),
+            secondary = Color(0xFFCCC2DC),
+            tertiary = Color(0xFFEFB8C8),
+            background = Color(0xFF0F0F0F),
+            surface = Color(0xFF1C1B1F),
+            surfaceVariant = Color(0xFF2C2B2F)
+        ),
+        typography = Typography(),
+        content = content
+    )
 }

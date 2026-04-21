@@ -18,21 +18,44 @@ class WearDataListenerService : WearableListenerService() {
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/settings") {
                 val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
-                val sitThreshold = dataMap.getInt("sitThreshold")
-                val repeatMinutes = dataMap.getInt("repeatMinutes")
+                val thresholdValue = dataMap.getInt("thresholdValue")
+                val thresholdUnit = dataMap.getInt("thresholdUnit")
+                val repeatValue = dataMap.getInt("repeatValue")
+                val repeatUnit = dataMap.getInt("repeatUnit")
                 val quietStart = dataMap.getInt("quietStart")
                 val quietEnd = dataMap.getInt("quietEnd")
 
-                Log.d("WearDataListener", "Received settings from watch: SitLimit=$sitThreshold")
+                Log.d("WearDataListener", "Received settings from watch")
 
                 val repository = MobileSettingsRepository(applicationContext)
                 scope.launch {
                     repository.updateFromWatch(
-                        sitThreshold = sitThreshold,
-                        repeatMinutes = repeatMinutes,
+                        thresholdValue = thresholdValue,
+                        thresholdUnit = thresholdUnit,
+                        repeatValue = repeatValue,
+                        repeatUnit = repeatUnit,
                         quietStart = quietStart,
                         quietEnd = quietEnd
                     )
+                }
+            } else if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/history") {
+                val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
+                val summaryMaps = dataMap.getDataMapArrayList("summaries") ?: emptyList()
+                
+                val entities = summaryMaps.map { map ->
+                    com.smartr.mobile.data.history.DailySummaryEntity(
+                        dateIso = map.getString("date") ?: "",
+                        sedentaryMinutes = map.getInt("sedentary"),
+                        remindersSent = map.getInt("sent"),
+                        remindersAcknowledged = map.getInt("ack")
+                    )
+                }
+
+                Log.d("WearDataListener", "Received ${entities.size} history summaries")
+
+                val historyRepository = com.smartr.mobile.data.history.MobileHistoryRepository(applicationContext)
+                scope.launch {
+                    historyRepository.recordSummaries(entities)
                 }
             }
         }

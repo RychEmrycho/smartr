@@ -28,4 +28,27 @@ class WearSyncManager(context: Context) {
             Log.e("WearSyncManager", "Failed to sync settings", e)
         }
     }
+
+    suspend fun syncHistory(summaries: List<com.smartr.wear.data.history.DailySummary>) {
+        try {
+            val request = PutDataMapRequest.create("/history").run {
+                val dataMaps = summaries.map { summary ->
+                    com.google.android.gms.wearable.DataMap().apply {
+                        putString("date", summary.dateIso)
+                        putInt("sedentary", summary.sedentaryMinutes)
+                        putInt("sent", summary.remindersSent)
+                        putInt("ack", summary.remindersAcknowledged)
+                    }
+                }
+                dataMap.putDataMapArrayList("summaries", ArrayList(dataMaps))
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+                setUrgent()
+                asPutDataRequest()
+            }
+            dataClient.putDataItem(request).await()
+            Log.d("WearSyncManager", "History synced to Data Layer: ${summaries.size} items")
+        } catch (e: Exception) {
+            Log.e("WearSyncManager", "Failed to sync history", e)
+        }
+    }
 }
