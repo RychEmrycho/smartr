@@ -32,6 +32,7 @@ This file contains the project conventions and technical rules for all AI coding
 - **Persistence**: 
     - **Room**: For structured daily/history data.
     - **DataStore**: For lightweight user preferences.
+    - **TrackingStateRepository**: MUST be used to persist critical runtime states (sedentary start time, step counts, off-body status) to survive process death and watch restarts.
 - **Standalone Architecture**: The watch is the source of truth. Do NOT rely on phone synchronization for real-time tracking decisions (e.g., sleep or activity).
 - **Off-Body Detection**: Use the native `OffBodyService` (SensorManager) to pause tracking. Reminders MUST be suppressed if `PassiveRuntimeStore.isOffBody` is true.
 
@@ -41,7 +42,14 @@ This file contains the project conventions and technical rules for all AI coding
 
 ## Coding Patterns
 - **Repository Pattern**: All data access MUST go through a repository.
-- **MVI/MVVM**: Use `StateFlow` to expose reactive state to the UI.
+- **MVVM Architecture**: 
+    - Use `ViewModel` for all screen-level state and logic.
+    - Composables should be stateless or use ViewModels for data.
+    - Use `StateFlow` to expose reactive state to the UI.
+- **UI Performance**: 
+    - Avoid object allocations (e.g., `Path()`, `Offset()`) inside `DrawScope` or frequent re-compositions.
+    - Use `remember` with keys correctly. 
+    - For path drawing, use imperative `path.reset()` and `path.lineTo()` to reuse path objects.
 - **Decoupled Logic**: Complex calculations (e.g., Wellness Score) MUST be encapsulated in "Engines" (e.g., `BehaviorInsightsEngine`).
 - **No Hardcoding**: All strings must use `strings.xml`. All colors must use `Color.kt` or `colors.xml`. Avoid hardcoded dimension offsets; use standard Material 3 tokens.
 - **Dependency Injection**: Use manual constructor-based DI to keep the project lightweight unless a framework is explicitly requested.

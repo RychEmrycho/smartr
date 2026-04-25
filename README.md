@@ -28,12 +28,14 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 - **Flexible Time Units**: Unified settings engine allowing seconds, minutes, or hours independently.
 - **Manual "Mark as Done"**: Log a break manually from the watch to reset timers instantly.
 - **Visual Data**: Sparklines and mini-charts directly on the watch dashboard, optimized for zero-allocation (`DrawScope` caching) to ensure smooth 60FPS performance on real hardware.
+- **Process-Resilient Tracking**: Advanced state persistence using `TrackingStateRepository` to ensure sedentary progress survives process death and watch restarts.
 - **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores.
 - **Dynamic Theming**: Support for dark/light modes and Wear OS 5 dynamic color schemes.
 
 ### 📱 Mobile Hub
 - **Premium Dashboard**: Material 3 dashboard with wellness gauges and streak tracking.
 - **Interactive Trends**: 30-day activity charts using high-fidelity `Canvas` drawing.
+- ✅ **Clean MVVM Architecture**: Fully decoupled presentation layer using standalone ViewModels and screen-specific components.
 - ✅ **Sensor-Agnostic Sync**: Robust registration logic that ensures sleep and exercise monitoring work even on devices with limited sensors (e.g., emulators).
 - ✅ **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
 - ✅ **Standalone Intelligence**: Fully independent watch logic for activity and sleep awareness.
