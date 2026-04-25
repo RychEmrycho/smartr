@@ -20,13 +20,25 @@ class OffBodyService : Service(), SensorEventListener {
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        offBodySensor = sensorManager.getDefaultSensor(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT)
+        
+        // Try to find the best available off-body sensor
+        // 34 = TYPE_LOW_LATENCY_OFFBODY_DETECT (API 34+)
+        // 23 = TYPE_OFFBODY_DETECT (Older devices/System API)
+        offBodySensor = sensorManager.getDefaultSensor(34) ?: sensorManager.getDefaultSensor(23)
+        
+        // If still not found, search the full list for anything containing "offbody"
+        if (offBodySensor == null) {
+            val allSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
+            offBodySensor = allSensors.firstOrNull { 
+                it.stringType.contains("offbody", ignoreCase = true) 
+            }
+        }
         
         if (offBodySensor != null) {
             sensorManager.registerListener(this, offBodySensor, SensorManager.SENSOR_DELAY_NORMAL)
-            Log.d("OffBodyService", "Sensor listener registered")
+            Log.d("OffBodyService", "Sensor listener registered: ${offBodySensor?.name} (${offBodySensor?.type})")
         } else {
-            Log.e("OffBodyService", "Low Latency Off-Body sensor not found")
+            Log.e("OffBodyService", "No Off-Body sensor found on this device")
         }
     }
 
@@ -35,7 +47,8 @@ class OffBodyService : Service(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        if (event.sensor.type == Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT) {
+        // Handle any sensor that we've identified as an off-body sensor
+        if (event.sensor.type == offBodySensor?.type) {
             val isOffBody = event.values[0] == 0f // 0.0 means off-wrist, 1.0 means on-wrist
             val previousState = PassiveRuntimeStore.isOffBody
             
