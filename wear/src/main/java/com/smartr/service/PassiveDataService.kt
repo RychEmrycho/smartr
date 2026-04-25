@@ -44,6 +44,7 @@ class PassiveDataService : PassiveListenerService() {
             }
 
             val now = Instant.now()
+            
             val latestDailySteps = dataPoints.getData(DataType.STEPS_DAILY)
                 .lastOrNull()
                 ?.value
@@ -51,7 +52,6 @@ class PassiveDataService : PassiveListenerService() {
             val movementDetected = latestDailySteps?.let { current ->
                 val previous = PassiveRuntimeStore.lastDailySteps
                 PassiveRuntimeStore.lastDailySteps = current
-                // Persist steps immediately
                 launch { trackingRepo.updateSteps(current) }
                 previous != null && current > previous
             } ?: false
@@ -79,9 +79,14 @@ class PassiveDataService : PassiveListenerService() {
             val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
             val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
 
-            // Update store to keep it in sync with device state
-            PassiveRuntimeStore.isDndEnabled = isDndEnabled
-            PassiveRuntimeStore.isCharging = isCharging
+            if (PassiveRuntimeStore.isDndEnabled != isDndEnabled) {
+                android.util.Log.i("PassiveDataService", "DND status changed: $isDndEnabled")
+                PassiveRuntimeStore.isDndEnabled = isDndEnabled
+            }
+            if (PassiveRuntimeStore.isCharging != isCharging) {
+                android.util.Log.i("PassiveDataService", "Charging status changed: $isCharging")
+                PassiveRuntimeStore.isCharging = isCharging
+            }
 
             val engine = InactivityEngine()
             
@@ -98,14 +103,13 @@ class PassiveDataService : PassiveListenerService() {
                 isExercising = PassiveRuntimeStore.isExercising
             )
             
-            // Persist tracking state
             if (updatedState != previousState) {
                 launch { trackingRepo.updateState(updatedState) }
             }
 
             PassiveRuntimeStore.inactivityState = updatedState
+            android.util.Log.d("PassiveDataService", "Engine evaluation: ${decision.reason}")
             
-            // ... (rest of the logic remains the same)
             if (!movementDetected && updatedState.sedentaryStart != null && elapsedMinutes > 0) {
                 historyRepository.addSedentaryMinutesSample(
                     LocalDate.now(ZoneId.systemDefault()),
