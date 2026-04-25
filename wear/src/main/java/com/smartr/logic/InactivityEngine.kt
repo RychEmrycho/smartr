@@ -23,8 +23,14 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
         now: Instant,
         settings: AppSettings,
         movementDetected: Boolean,
-        isWatchSleeping: Boolean = false
+        isWatchSleeping: Boolean = false,
+        isOffBody: Boolean = false
     ): Pair<InactivityState, InactivityDecision> {
+        if (isOffBody) {
+            // Pause sedentary tracking while off-body
+            return state.copy(sedentaryStart = null) to InactivityDecision(false, "watch_off_body")
+        }
+
         if (movementDetected) {
             return state.copy(
                 sedentaryStart = null,

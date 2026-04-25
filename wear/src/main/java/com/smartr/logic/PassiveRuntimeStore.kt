@@ -19,6 +19,9 @@ object PassiveRuntimeStore {
     @Volatile
     var isWatchSleeping: Boolean = false
 
+    @Volatile
+    var isOffBody: Boolean = false
+
     fun reset() {
         inactivityState = inactivityState.copy(
             sedentaryStart = null,

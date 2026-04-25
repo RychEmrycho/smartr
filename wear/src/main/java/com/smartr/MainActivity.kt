@@ -83,9 +83,13 @@ import com.smartr.presentation.component.Sparkline
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Sync
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import java.time.LocalTime
+import android.Manifest
+import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
+import com.smartr.service.OffBodyService
 
 enum class SettingType {
     NONE, SIT_LIMIT, REMINDER_REPEAT, QUIET_START, QUIET_END, THEME
@@ -112,6 +116,16 @@ class MainActivity : ComponentActivity() {
             ExistingWorkPolicy.KEEP,
             OneTimeWorkRequestBuilder<PassiveRegistrationWorker>().build()
         )
+
+        val permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                startOffBodyService()
+            }
+        }
+
+        permissionLauncher.launch(Manifest.permission.BODY_SENSORS)
 
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = SettingsRepository.DEFAULTS)
@@ -144,6 +158,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun startOffBodyService() {
+        startService(Intent(this, OffBodyService::class.java))
     }
 
     private fun triggerManualSync() {

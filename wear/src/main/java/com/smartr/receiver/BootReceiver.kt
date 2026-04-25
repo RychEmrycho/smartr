@@ -12,5 +12,8 @@ class BootReceiver : BroadcastReceiver() {
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
         val work = OneTimeWorkRequestBuilder<PassiveRegistrationWorker>().build()
         WorkManager.getInstance(context).enqueue(work)
+
+        val offBodyIntent = Intent(context, com.smartr.service.OffBodyService::class.java)
+        context.startService(offBodyIntent)
     }
 }

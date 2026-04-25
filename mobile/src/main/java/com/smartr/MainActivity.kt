@@ -28,11 +28,7 @@ import com.smartr.logic.BehaviorInsightsEngine
 import com.smartr.logic.InsightSnapshot
 import com.smartr.ui.components.TrendChart
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.health.connect.client.PermissionController
-import com.smartr.data.health.HealthConnectManager
 import androidx.work.*
-import com.smartr.service.SleepDetectionWorker
 import com.smartr.service.SyncPingWorker
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.tasks.await
@@ -46,7 +42,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val settingsRepository = MobileSettingsRepository(applicationContext)
         val historyRepository = MobileHistoryRepository(applicationContext)
-        val healthManager = HealthConnectManager(applicationContext)
         val engine = BehaviorInsightsEngine()
 
         setContent {
@@ -54,23 +49,8 @@ class MainActivity : ComponentActivity() {
             val history by historyRepository.summaries(30).collectAsState(initial = emptyList())
             val insight = remember(history) { engine.build(history) }
             
-            var hasHealthPermissions by remember { mutableStateOf(false) }
-
             LaunchedEffect(Unit) {
                 scheduleSyncPing()
-                hasHealthPermissions = healthManager.hasAllPermissions()
-                if (hasHealthPermissions) {
-                    scheduleSleepWorker()
-                }
-            }
-
-            val permissionLauncher = rememberLauncherForActivityResult(
-                PermissionController.createRequestPermissionResultContract()
-            ) { granted: Set<String> ->
-                hasHealthPermissions = granted.containsAll(healthManager.permissions)
-                if (hasHealthPermissions) {
-                    scheduleSleepWorker()
-                }
             }
 
             val scope = rememberCoroutineScope()
@@ -84,10 +64,6 @@ class MainActivity : ComponentActivity() {
                         insight = insight,
                         trend = history.map { it.sedentaryMinutes }.reversed(),
                         settings = settings,
-                        hasHealthPermissions = hasHealthPermissions,
-                        onConnectHealth = {
-                            permissionLauncher.launch(healthManager.permissions)
-                        },
                         onTestConnectivity = {
                             sendPing()
                         },
@@ -103,16 +79,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun scheduleSleepWorker() {
-        val request = PeriodicWorkRequestBuilder<SleepDetectionWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_REQUIRED).build())
-            .build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "sleep_detection",
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
-    }
 
     private fun scheduleSyncPing() {
         val request = OneTimeWorkRequestBuilder<SyncPingWorker>()
@@ -145,8 +111,6 @@ fun DashboardScreen(
     insight: InsightSnapshot,
     trend: List<Int>,
     settings: WatchSettings,
-    hasHealthPermissions: Boolean,
-    onConnectHealth: () -> Unit,
     onTestConnectivity: () -> Unit,
     onUpdatePing: (Int, com.smartr.data.TimeIntervalUnit) -> Unit
 ) {
@@ -165,11 +129,6 @@ fun DashboardScreen(
             }
         }
 
-        if (!hasHealthPermissions) {
-            item {
-                HealthConnectPrompt(onConnectHealth)
-            }
-        }
 
         item {
             WellnessScoreCard(insight.wellnessScore)
@@ -380,41 +339,6 @@ fun SettingRowLite(label: String, value: String) {
     }
 }
 
-@Composable
-fun HealthConnectPrompt(onConnect: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        shape = RoundedCornerShape(24.dp),
-        onClick = onConnect
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.HealthAndSafety,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    "Connect Health Intelligence",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "Enable sleep awareness and data syncing.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun ConnectivityDebugCard(

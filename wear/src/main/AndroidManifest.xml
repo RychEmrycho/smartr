@@ -5,6 +5,7 @@
 
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
@@ -30,6 +31,10 @@
             android:name=".service.PassiveDataService"
             android:exported="false"
             android:permission="com.google.android.wearable.healthservices.permission.PASSIVE_DATA_BINDING" />
+
+        <service
+            android:name=".service.OffBodyService"
+            android:exported="false" />
 
         <service
             android:name=".service.PhoneDataListenerService"

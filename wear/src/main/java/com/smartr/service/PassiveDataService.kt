@@ -34,6 +34,7 @@ class PassiveDataService : PassiveListenerService() {
                 PassiveRuntimeStore.lastDailySteps = current
                 previous != null && current > previous
             } ?: false
+
             val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
             PassiveRuntimeStore.lastPassiveCallbackAt = now
             val elapsedMinutes = previousCallbackAt?.let {
