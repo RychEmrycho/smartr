@@ -27,6 +27,7 @@ import com.smartr.data.ThemePreference
 import com.smartr.presentation.DashboardScreen
 import com.smartr.presentation.HistoryScreen
 import com.smartr.presentation.SettingsScreen
+import com.smartr.presentation.theme.SmartRTheme
 import com.smartr.service.OffBodyService
 import com.smartr.worker.PassiveRegistrationWorker
 import kotlinx.coroutines.launch
@@ -72,15 +73,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = SettingsRepository.DEFAULTS)
             val navController = rememberSwipeDismissableNavController()
-            
-            val context = LocalContext.current
-            val colorScheme = when (settings.theme) {
-                ThemePreference.DARK -> ColorScheme()
-                ThemePreference.LIGHT -> ColorScheme()
-                ThemePreference.FOLLOW_SYSTEM -> dynamicColorScheme(context) ?: ColorScheme()
-            }
 
-            MaterialTheme(colorScheme = colorScheme) {
+            SmartRTheme(
+                themePreference = settings.theme
+            ) {
                 AppScaffold {
                     SwipeDismissableNavHost(
                         navController = navController,

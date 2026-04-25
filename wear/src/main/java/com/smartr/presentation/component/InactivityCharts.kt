@@ -19,6 +19,8 @@ fun Sparkline(
 ) {
     if (data.isEmpty()) return
 
+    // Path objects are hoisted but reset in DrawScope
+    // However, they are still re-calculated based on size change
     val strokePath = remember { Path() }
     val fillPath = remember { Path() }
 

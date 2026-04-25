@@ -133,7 +133,14 @@ fun SettingsScreen(
                                             activeEditor = SettingType.NONE
                                         } 
                                     },
-                                    title = { Text(theme.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                                    title = { 
+                                        val displayName = when (theme) {
+                                            ThemePreference.AUTO -> stringResource(R.string.theme_auto)
+                                            ThemePreference.LIGHT -> stringResource(R.string.theme_light)
+                                            ThemePreference.DARK -> stringResource(R.string.theme_dark)
+                                        }
+                                        Text(displayName)
+                                    }
                                 ) {
                                     RadioButton(
                                         selected = settings.theme == theme,
@@ -214,7 +221,14 @@ fun SettingsScreen(
                     TitleCard(
                         onClick = { activeEditor = SettingType.THEME },
                         title = { Text(stringResource(R.string.settings_theme)) },
-                        subtitle = { Text(settings.theme.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                        subtitle = { 
+                            val displayName = when (settings.theme) {
+                                ThemePreference.AUTO -> stringResource(R.string.theme_auto)
+                                ThemePreference.LIGHT -> stringResource(R.string.theme_light)
+                                ThemePreference.DARK -> stringResource(R.string.theme_dark)
+                            }
+                            Text(displayName)
+                        }
                     )
                 }
             }

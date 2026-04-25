@@ -36,7 +36,7 @@ data class AppSettings(
 )
 
 enum class ThemePreference {
-    FOLLOW_SYSTEM, LIGHT, DARK
+    AUTO, LIGHT, DARK
 }
 
 class SettingsRepository(private val context: Context) {
@@ -65,7 +65,7 @@ class SettingsRepository(private val context: Context) {
             reminderRepeatUnit = TimeIntervalUnit.MINUTES,
             quietStartHour = 22,
             quietEndHour = 6,
-            theme = ThemePreference.FOLLOW_SYSTEM,
+            theme = ThemePreference.AUTO,
             isSleeping = false
         )
     }

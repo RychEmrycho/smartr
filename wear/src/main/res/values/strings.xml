@@ -29,4 +29,7 @@
     <string name="settings_select">Select</string>
     <string name="settings_format_plural">%1$d %2$ss</string>
     <string name="settings_format_singular">%1$d %2$s</string>
+    <string name="theme_auto">Auto</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 </resources>
