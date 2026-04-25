@@ -3,8 +3,8 @@
 This file contains the project conventions and technical rules for all AI coding agents working on the Smartr project.
 
 ## Project Structure
-- `:mobile`: Android application (S23 Ultra companion).
-- `:wear`: Wear OS application (Primary tracker).
+- `:mobile`: Handheld application (Mobile companion/dashboard).
+- `:wear`: Wear OS application (Primary monitoring and logic hub).
 
 ## Commit Conventions
 - **Standard**: Always use [Conventional Commits](https://www.conventionalcommits.org/).
@@ -24,7 +24,7 @@ This file contains the project conventions and technical rules for all AI coding
 - **KSP**: Used for Room annotation processing.
 - **Gradle**: Kotlin DSL (`.gradle.kts`).
 
-### Wear OS (`:wear`) - API 35+ Focus
+### Wear OS (`:wear`) - API 35+ Target
 - **Compose Material 3**: Use Wear M3 components (`TitleCard`, `AppCard`, `Button`, `Stepper`).
 - **Layouts**: Use `ScreenScaffold` and `ScalingLazyColumn`. Optimize for different screen shapes/sizes (Circular vs. Square).
 - **Navigation**: `SwipeDismissableNavHost` is required.
