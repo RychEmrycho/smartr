@@ -130,6 +130,7 @@ class PassiveDataService : PassiveListenerService() {
     }
 
     override fun onUserActivityInfoReceived(info: UserActivityInfo) {
+        android.util.Log.i("PassiveDataService", "onUserActivityInfoReceived: ${info.userActivityState}")
         val isAsleep = info.userActivityState == UserActivityState.USER_ACTIVITY_ASLEEP
         val isExercising = info.userActivityState == UserActivityState.USER_ACTIVITY_EXERCISE
 

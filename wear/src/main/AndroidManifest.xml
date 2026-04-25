@@ -29,7 +29,7 @@
 
         <service
             android:name=".service.PassiveDataService"
-            android:exported="false"
+            android:exported="true"
             android:permission="com.google.android.wearable.healthservices.permission.PASSIVE_DATA_BINDING" />
 
         <service

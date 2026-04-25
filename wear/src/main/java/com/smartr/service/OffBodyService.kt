@@ -58,7 +58,7 @@ class OffBodyService : Service(), SensorEventListener {
             
             // Persist the state
             val repo = com.smartr.data.TrackingStateRepository(applicationContext)
-            kotlinx.coroutines.MainScope().launch {
+            serviceScope.launch {
                 repo.setOffBody(isOffBody)
             }
         }
@@ -80,6 +80,7 @@ class OffBodyService : Service(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
+        serviceScope.cancel()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
