@@ -8,7 +8,8 @@ object PassiveRuntimeStore {
     var inactivityState: InactivityState = InactivityState(
         sedentaryStart = null,
         lastMovement = null,
-        lastReminderAt = null
+        lastReminderAt = null,
+        lastSignificantMovementAt = null
     )
 
     @Volatile
@@ -22,6 +23,15 @@ object PassiveRuntimeStore {
 
     @Volatile
     var isOffBody: Boolean = false
+
+    @Volatile
+    var isCharging: Boolean = false
+
+    @Volatile
+    var isDndEnabled: Boolean = false
+
+    @Volatile
+    var isExercising: Boolean = false
 
     // Initialize from persisted state
     fun updateFromPersisted(

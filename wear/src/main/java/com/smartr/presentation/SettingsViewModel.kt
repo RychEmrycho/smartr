@@ -18,20 +18,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val settings: StateFlow<AppSettings> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsRepository.DEFAULTS)
 
-    fun updateSitThresholdValue(value: Int) {
-        viewModelScope.launch { repository.updateSitThresholdValue(value) }
+    fun updateSitThreshold(value: Int, unit: TimeIntervalUnit) {
+        viewModelScope.launch { repository.updateSitThreshold(value, unit) }
     }
 
-    fun updateSitThresholdUnit(unit: TimeIntervalUnit) {
-        viewModelScope.launch { repository.updateSitThresholdUnit(unit) }
+    fun updateReminderRepeat(value: Int, unit: TimeIntervalUnit) {
+        viewModelScope.launch { repository.updateReminderRepeat(value, unit) }
     }
 
-    fun updateReminderRepeatValue(value: Int) {
-        viewModelScope.launch { repository.updateReminderRepeatValue(value) }
+    fun updateMovementBuffer(value: Int, unit: TimeIntervalUnit) {
+        viewModelScope.launch { repository.updateMovementBuffer(value, unit) }
     }
 
-    fun updateReminderRepeatUnit(unit: TimeIntervalUnit) {
-        viewModelScope.launch { repository.updateReminderRepeatUnit(unit) }
+    fun updateTheme(theme: ThemePreference) {
+        viewModelScope.launch { repository.updateTheme(theme) }
     }
 
     fun updateQuietStartHour(hour: Int) {
@@ -40,9 +40,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun updateQuietEndHour(hour: Int) {
         viewModelScope.launch { repository.updateQuietEndHour(hour) }
-    }
-
-    fun updateTheme(theme: ThemePreference) {
-        viewModelScope.launch { repository.updateTheme(theme) }
     }
 }

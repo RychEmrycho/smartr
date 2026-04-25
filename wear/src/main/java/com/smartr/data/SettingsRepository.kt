@@ -31,6 +31,8 @@ data class AppSettings(
     val reminderRepeatUnit: TimeIntervalUnit,
     val quietStartHour: Int,
     val quietEndHour: Int,
+    val movementBufferValue: Int,
+    val movementBufferUnit: TimeIntervalUnit,
     val theme: ThemePreference,
     val isSleeping: Boolean = false
 )
@@ -55,6 +57,8 @@ class SettingsRepository(private val context: Context) {
         
         private val QUIET_START_HOUR = intPreferencesKey("quiet_start_hour")
         private val QUIET_END_HOUR = intPreferencesKey("quiet_end_hour")
+        private val MOVEMENT_BUFFER_VALUE = intPreferencesKey("movement_buffer_value")
+        private val MOVEMENT_BUFFER_UNIT = intPreferencesKey("movement_buffer_unit")
         private val THEME_PREFERENCE = intPreferencesKey("theme_preference")
         private val IS_SLEEPING = androidx.datastore.preferences.core.booleanPreferencesKey("is_sleeping")
 
@@ -65,6 +69,8 @@ class SettingsRepository(private val context: Context) {
             reminderRepeatUnit = TimeIntervalUnit.MINUTES,
             quietStartHour = 22,
             quietEndHour = 6,
+            movementBufferValue = 60,
+            movementBufferUnit = TimeIntervalUnit.SECONDS,
             theme = ThemePreference.AUTO,
             isSleeping = false
         )
@@ -90,6 +96,10 @@ class SettingsRepository(private val context: Context) {
             if (!prefs.contains(QUIET_END_HOUR)) {
                 prefs[QUIET_END_HOUR] = DEFAULTS.quietEndHour
             }
+            if (!prefs.contains(MOVEMENT_BUFFER_VALUE)) {
+                prefs[MOVEMENT_BUFFER_VALUE] = DEFAULTS.movementBufferValue
+                prefs[MOVEMENT_BUFFER_UNIT] = DEFAULTS.movementBufferUnit.ordinal
+            }
             if (!prefs.contains(THEME_PREFERENCE)) {
                 prefs[THEME_PREFERENCE] = DEFAULTS.theme.ordinal
             }
@@ -101,46 +111,40 @@ class SettingsRepository(private val context: Context) {
         return settings.first()
     }
 
-    suspend fun updateSitThresholdValue(value: Int) {
+    suspend fun updateSitThreshold(value: Int, unit: TimeIntervalUnit) {
         context.dataStore.edit { prefs ->
             prefs[SIT_THRESHOLD_VALUE] = value
-        }
-        syncToWear()
-    }
-
-    suspend fun updateSitThresholdUnit(unit: TimeIntervalUnit) {
-        context.dataStore.edit { prefs ->
             prefs[SIT_THRESHOLD_UNIT] = unit.ordinal
         }
         syncToWear()
     }
 
-    suspend fun updateReminderRepeatValue(value: Int) {
+    suspend fun updateReminderRepeat(value: Int, unit: TimeIntervalUnit) {
         context.dataStore.edit { prefs ->
             prefs[REPEAT_VALUE] = value
-        }
-        syncToWear()
-    }
-
-    suspend fun updateReminderRepeatUnit(unit: TimeIntervalUnit) {
-        context.dataStore.edit { prefs ->
             prefs[REPEAT_UNIT] = unit.ordinal
         }
         syncToWear()
     }
 
-    suspend fun updateQuietStartHour(hour: Int) {
-        val newVal = hour.coerceIn(0, 23)
+    suspend fun updateMovementBuffer(value: Int, unit: TimeIntervalUnit) {
         context.dataStore.edit { prefs ->
-            prefs[QUIET_START_HOUR] = newVal
+            prefs[MOVEMENT_BUFFER_VALUE] = value
+            prefs[MOVEMENT_BUFFER_UNIT] = unit.ordinal
+        }
+        syncToWear()
+    }
+
+    suspend fun updateQuietStartHour(hour: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[QUIET_START_HOUR] = hour.coerceIn(0, 23)
         }
         syncToWear()
     }
 
     suspend fun updateQuietEndHour(hour: Int) {
-        val newVal = hour.coerceIn(0, 23)
         context.dataStore.edit { prefs ->
-            prefs[QUIET_END_HOUR] = newVal
+            prefs[QUIET_END_HOUR] = hour.coerceIn(0, 23)
         }
         syncToWear()
     }
@@ -178,6 +182,8 @@ class SettingsRepository(private val context: Context) {
             reminderRepeatUnit = repeatUnit,
             quietStartHour = this[QUIET_START_HOUR] ?: DEFAULTS.quietStartHour,
             quietEndHour = this[QUIET_END_HOUR] ?: DEFAULTS.quietEndHour,
+            movementBufferValue = this[MOVEMENT_BUFFER_VALUE] ?: DEFAULTS.movementBufferValue,
+            movementBufferUnit = this[MOVEMENT_BUFFER_UNIT]?.let { TimeIntervalUnit.entries[it] } ?: DEFAULTS.movementBufferUnit,
             theme = ThemePreference.entries[this[THEME_PREFERENCE] ?: DEFAULTS.theme.ordinal],
             isSleeping = this[IS_SLEEPING] ?: DEFAULTS.isSleeping
         )

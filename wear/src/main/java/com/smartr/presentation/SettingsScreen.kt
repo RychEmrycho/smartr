@@ -22,7 +22,7 @@ import androidx.compose.ui.res.stringResource
 import com.smartr.R
 
 enum class SettingType {
-    NONE, SIT_LIMIT, REMINDER_REPEAT, QUIET_START, QUIET_END, THEME
+    NONE, SIT_LIMIT, REMINDER_REPEAT, QUIET_START, QUIET_END, MOVEMENT_BUFFER, THEME
 }
 
 @Composable
@@ -47,22 +47,34 @@ fun SettingsScreen(
                     }
                     Stepper(
                         value = settings.sitThresholdValue.coerceIn(range.first, range.last),
-                        onValueChange = { scope.launch { viewModel.updateSitThresholdValue(it) } },
+                        onValueChange = { viewModel.updateSitThreshold(it, unit) },
                         valueProgression = range,
                         increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.settings_increase)) },
                         decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.settings_decrease)) }
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(stringResource(R.string.settings_sit_limit), style = MaterialTheme.typography.labelMedium)
-                            Text("${settings.sitThresholdValue}", style = MaterialTheme.typography.displayMedium)
-                            FilledTonalButton(
+                        val unitLabel = unit.name.lowercase().take(3)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_sit_limit),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1
+                            )
+                            TextButton(
                                 onClick = {
                                     val nextUnit = TimeIntervalUnit.entries[(unit.ordinal + 1) % TimeIntervalUnit.entries.size]
-                                    scope.launch { viewModel.updateSitThresholdUnit(nextUnit) }
-                                },
-                                modifier = Modifier.size(width = 80.dp, height = 32.dp)
+                                    viewModel.updateSitThreshold(settings.sitThresholdValue, nextUnit)
+                                }
                             ) {
-                                Text(unit.name.lowercase(), style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    text = "${settings.sitThresholdValue} $unitLabel",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
                     }
@@ -76,22 +88,34 @@ fun SettingsScreen(
                     }
                     Stepper(
                         value = settings.reminderRepeatValue.coerceIn(range.first, range.last),
-                        onValueChange = { scope.launch { viewModel.updateReminderRepeatValue(it) } },
+                        onValueChange = { viewModel.updateReminderRepeat(it, unit) },
                         valueProgression = range,
                         increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.settings_increase)) },
                         decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.settings_decrease)) }
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(stringResource(R.string.settings_reminder_every), style = MaterialTheme.typography.labelMedium)
-                            Text("${settings.reminderRepeatValue}", style = MaterialTheme.typography.displayMedium)
-                            FilledTonalButton(
+                        val unitLabel = unit.name.lowercase().take(3)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_reminder_every),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1
+                            )
+                            TextButton(
                                 onClick = {
                                     val nextUnit = TimeIntervalUnit.entries[(unit.ordinal + 1) % TimeIntervalUnit.entries.size]
-                                    scope.launch { viewModel.updateReminderRepeatUnit(nextUnit) }
-                                },
-                                modifier = Modifier.size(width = 80.dp, height = 32.dp)
+                                    viewModel.updateReminderRepeat(settings.reminderRepeatValue, nextUnit)
+                                }
                             ) {
-                                Text(unit.name.lowercase(), style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    text = "${settings.reminderRepeatValue} $unitLabel",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
                     }
@@ -117,6 +141,46 @@ fun SettingsScreen(
                             }
                         }
                     )
+                }
+                SettingType.MOVEMENT_BUFFER -> {
+                    val unit = settings.movementBufferUnit
+                    val range = when (unit) {
+                        TimeIntervalUnit.SECONDS -> 5..300 step 5
+                        else -> 1..10 step 1 // Only Seconds and Minutes make sense for a buffer
+                    }
+                    Stepper(
+                        value = settings.movementBufferValue.coerceIn(range.first, range.last),
+                        onValueChange = { viewModel.updateMovementBuffer(it, unit) },
+                        valueProgression = range,
+                        increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.settings_increase)) },
+                        decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.settings_decrease)) }
+                    ) {
+                        val unitLabel = unit.name.lowercase().take(3)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_movement_buffer),
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1
+                            )
+                            TextButton(
+                                onClick = {
+                                    val nextUnit = if (unit == TimeIntervalUnit.SECONDS) TimeIntervalUnit.MINUTES else TimeIntervalUnit.SECONDS
+                                    viewModel.updateMovementBuffer(settings.movementBufferValue, nextUnit)
+                                }
+                            ) {
+                                Text(
+                                    text = "${settings.movementBufferValue} $unitLabel",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
                 }
                 SettingType.THEME -> {
                     ScalingLazyColumn(
@@ -229,6 +293,20 @@ fun SettingsScreen(
                             }
                             Text(displayName)
                         }
+                    )
+                }
+
+                item {
+                    val unitStr = settings.movementBufferUnit.name.lowercase().removeSuffix("s")
+                    val subtitle = if (settings.movementBufferValue > 1) {
+                        stringResource(R.string.settings_format_plural, settings.movementBufferValue, unitStr)
+                    } else {
+                        stringResource(R.string.settings_format_singular, settings.movementBufferValue, unitStr)
+                    }
+                    TitleCard(
+                        onClick = { activeEditor = SettingType.MOVEMENT_BUFFER },
+                        title = { Text(stringResource(R.string.settings_movement_buffer)) },
+                        subtitle = { Text(subtitle) }
                     )
                 }
             }
