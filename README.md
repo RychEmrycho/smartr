@@ -27,14 +27,14 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 - **Intelligent Quiet Hours**: Suppress notifications during sleep or focus time.
 - **Flexible Time Units**: Unified settings engine allowing seconds, minutes, or hours independently.
 - **Manual "Mark as Done"**: Log a break manually from the watch to reset timers instantly.
-- **Visual Data**: Sparklines and mini-charts directly on the watch dashboard.
+- **Visual Data**: Sparklines and mini-charts directly on the watch dashboard, optimized for zero-allocation (`DrawScope` caching) to ensure smooth 60FPS performance on real hardware.
 - **Wear OS 5 Complications**: Custom watch face slots for streaks and wellness scores.
 - **Dynamic Theming**: Support for dark/light modes and Wear OS 5 dynamic color schemes.
 
 ### 📱 Mobile Hub
 - **Premium Dashboard**: Material 3 dashboard with wellness gauges and streak tracking.
 - **Interactive Trends**: 30-day activity charts using high-fidelity `Canvas` drawing.
-- ✅ **Real-time Sync**: Automatic mirroring of health history and settings from watch to phone.
+- ✅ **Sensor-Agnostic Sync**: Robust registration logic that ensures sleep and exercise monitoring work even on devices with limited sensors (e.g., emulators).
 - ✅ **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
 - ✅ **Standalone Intelligence**: Fully independent watch logic for activity and sleep awareness.
 
@@ -44,19 +44,20 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 
 Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
-### 📱 Phase 1: Mobile Companion
+### 📱 Phase 1: Mobile Companion (Complete)
 - [x] **Rich Dashboard**: A deep-dive mobile app for long-term health visualization (weekly/monthly/yearly).
 - [x] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
 - [x] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
-### 🧠 Phase 2: Standalone Intelligence
+### 🧠 Phase 2: Standalone Intelligence (Complete)
 - [x] **Native Sleep Detection**: Leverage Wear OS Health Services for real-time sleep state awareness directly on the watch.
-- [x] **Off-Body Sensing**: Integrated support for Low-Latency Off-Body sensors to detect when the device is not being worn.
+- [x] **Off-Body Sensing**: Robust support for Low-Latency Off-Body sensors with fallback mechanisms for older hardware.
 - [x] **Watch-Centric Logic**: All decision-making (Wellness Score, Nudges) happens natively on the wearable.
 
-### 🚀 Phase 3: The Polish & AI (Next)
+### 🚀 Phase 3: The Polish & AI (Active)
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
 - [ ] **Smart notification**: Custom haptics and sounds for different health events.
+- [ ] **Extended Observability**: Real-time debug visualizations for sedentary state transitions.
 
 ---
 
@@ -71,12 +72,16 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 
 ---
 
-## 📱 Testing Devices
+---
 
-Tested on the following hardware to ensure performance and sensor accuracy:
+## 📱 Testing & Simulation
+
+Smartr is tested on real-world hardware to ensure 60FPS performance and sensor accuracy:
 
 *   **Watch**: Oppo Watch X2 (Wear OS 5 / API 35)
 *   **Phone**: Samsung Galaxy S23 Ultra (Android 16)
+
+For developers, we provide a comprehensive **Simulation Guide** in [CONTRIBUTING.md](CONTRIBUTING.md) with ADB commands to inject Sleep, Activity, and Off-Body states.
 
 ---
 
