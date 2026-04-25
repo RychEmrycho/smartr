@@ -32,6 +32,8 @@ This file contains the project conventions and technical rules for all AI coding
 - **Persistence**: 
     - **Room**: For structured daily/history data.
     - **DataStore**: For lightweight user preferences.
+- **Standalone Architecture**: The watch is the source of truth. Do NOT rely on phone synchronization for real-time tracking decisions (e.g., sleep or activity).
+- **Off-Body Detection**: Use the native `OffBodyService` (SensorManager) to pause tracking. Reminders MUST be suppressed if `PassiveRuntimeStore.isOffBody` is true.
 
 ### Handheld (`:mobile`)
 - **Rich Dashboard**: The mobile app should provide longer history trends and deeper configuration than the watch.

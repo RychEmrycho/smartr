@@ -15,7 +15,8 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 ### 🩺 Wellness Logic
 - **Wellness Score (0-100)**: A proprietary algorithm that calculates your daily movement efficiency based on sitting duration and reminder responsiveness.
 - **Dynamic Streaks**: Track consecutive days of meeting your movement goals.
-- **Passive Monitoring**: Uses Wear Health Services to track inactivity in the background without draining battery.
+- **Passive Monitoring**: Uses Wear Health Services to track inactivity and activity states in the background without draining battery.
+- **On-Wrist Awareness**: Real-time detection of the watch's worn state using low-latency sensors, automatically pausing reminders when the watch is removed.
 
 ### 🎨 Premium Wear UI
 - **Material 3 Design**: Fully compliant with the latest Wear OS Design System.
@@ -35,7 +36,7 @@ Designed with a "Wear-First" philosophy, it leverages low-power passive health s
 - **Interactive Trends**: 30-day activity charts using high-fidelity `Canvas` drawing.
 - ✅ **Real-time Sync**: Automatic mirroring of health history and settings from watch to phone.
 - ✅ **Sedentary Persistence**: Indefinite local history storage using a dedicated mobile Room database.
-- ✅ **Health Connect Intelligence**: Automated sleep awareness and cross-platform activity synchronization.
+- ✅ **Standalone Intelligence**: Fully independent watch logic for activity and sleep awareness.
 
 ---
 
@@ -48,10 +49,10 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 - [x] **Persistent Sync**: Real-time Data Layer synchronization between watch and phone.
 - [x] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
-### 🏥 Phase 2: Health Intelligence
-- [x] **Health Connect Integration**: Deep integration with the Android health ecosystem.
-- [x] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping (reading from apps like Samsung Health, Oura, etc.).
-- [x] **Smart Nudge Logic**: Watches now respect your sleep state via real-time mobile synchronization.
+### 🧠 Phase 2: Standalone Intelligence
+- [x] **Native Sleep Detection**: Leverage Wear OS Health Services for real-time sleep state awareness directly on the watch.
+- [x] **Off-Body Sensing**: Integrated support for Low-Latency Off-Body sensors to detect when the device is not being worn.
+- [x] **Watch-Centric Logic**: All decision-making (Wellness Score, Nudges) happens natively on the wearable.
 
 ### 🚀 Phase 3: The Polish & AI (Next)
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.
