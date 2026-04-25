@@ -18,35 +18,9 @@ class OffBodyService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var offBodySensor: Sensor? = null
 
-    private val debugReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                "com.smartr.DEBUG_OFF_BODY" -> {
-                    val isOffBody = intent.getBooleanExtra("isOffBody", false)
-                    updateState(isOffBody, "DEBUG")
-                }
-                "com.smartr.DEBUG_SLEEP" -> {
-                    val isAsleep = intent.getBooleanExtra("isAsleep", false)
-                    PassiveRuntimeStore.isWatchSleeping = isAsleep
-                    val message = if (isAsleep) "User is Asleep (Debug)" else "User is Awake (Debug)"
-                    Log.i("OffBodyService", "EVENT [DEBUG]: $message")
-                    Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        
-        // Register debug receiver
-        val filter = android.content.IntentFilter().apply {
-            addAction("com.smartr.DEBUG_OFF_BODY")
-            addAction("com.smartr.DEBUG_SLEEP")
-        }
-        // Must be EXPORTED to receive from adb shell
-        registerReceiver(debugReceiver, filter, Context.RECEIVER_EXPORTED)
         
         // Try to find the best available off-body sensor
         // 34 = TYPE_LOW_LATENCY_OFFBODY_DETECT (API 34+)
@@ -56,13 +30,6 @@ class OffBodyService : Service(), SensorEventListener {
         // If still not found, search the full list for anything containing "offbody"
         if (offBodySensor == null) {
             val allSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
-            Log.d("OffBodyService", "--- START SENSOR DUMP ---")
-            allSensors.forEach { 
-                Log.d("OffBodyService", "Sensor: ${it.name} | Type: ${it.type} | StringType: ${it.stringType}")
-            }
-            Log.d("OffBodyService", "--- END SENSOR DUMP ---")
-            
-            // Only look for "offbody" now, ignore "wrist" as it picks up tilt sensors on emulator
             offBodySensor = allSensors.firstOrNull { 
                 it.stringType.contains("offbody", ignoreCase = true) ||
                 it.name.contains("off-body", ignoreCase = true)
@@ -71,19 +38,17 @@ class OffBodyService : Service(), SensorEventListener {
         
         if (offBodySensor != null) {
             sensorManager.registerListener(this, offBodySensor, SensorManager.SENSOR_DELAY_NORMAL)
-            Log.d("OffBodyService", "Sensor listener registered: ${offBodySensor?.name} (${offBodySensor?.type})")
+            Log.d("OffBodyService", "Off-body sensor registered: ${offBodySensor?.name}")
         } else {
-            Log.e("OffBodyService", "No Off-Body sensor found on this device")
+            Log.w("OffBodyService", "No Off-Body sensor found on this device")
         }
     }
 
-    private fun updateState(isOffBody: Boolean, source: String) {
+    private fun updateState(isOffBody: Boolean) {
         val previousState = PassiveRuntimeStore.isOffBody
         if (previousState != isOffBody) {
             PassiveRuntimeStore.isOffBody = isOffBody
-            val message = if (isOffBody) "Watch Removed (Paused)" else "Watch On-Wrist (Active)"
-            Log.i("OffBodyService", "EVENT [$source]: $message")
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            Log.i("OffBodyService", "Watch status changed: ${if (isOffBody) "Off-wrist" else "On-wrist"}")
         }
     }
 
@@ -92,10 +57,9 @@ class OffBodyService : Service(), SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        // Handle any sensor that we've identified as an off-body sensor
         if (event.sensor.type == offBodySensor?.type) {
             val isOffBody = event.values[0] == 0f // 0.0 means off-wrist, 1.0 means on-wrist
-            updateState(isOffBody, "SENSOR")
+            updateState(isOffBody)
         }
     }
 
@@ -103,9 +67,7 @@ class OffBodyService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(debugReceiver)
         sensorManager.unregisterListener(this)
-        Log.d("OffBodyService", "Sensor listener unregistered")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

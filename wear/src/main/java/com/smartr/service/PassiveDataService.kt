@@ -36,11 +36,7 @@ class PassiveDataService : PassiveListenerService() {
             } ?: false
 
             if (movementDetected) {
-                val message = "Physical Movement Detected"
-                android.util.Log.i("PassiveDataService", "EVENT: $message")
-                serviceScope.launch(Dispatchers.Main) {
-                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
-                }
+                android.util.Log.i("PassiveDataService", "Physical movement detected (Steps)")
             }
 
             val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
@@ -66,22 +62,14 @@ class PassiveDataService : PassiveListenerService() {
             
             // Detect sedentary transitions
             if (previousState.sedentaryStart == null && updatedState.sedentaryStart != null) {
-                val message = "Sedentary Tracking Started"
-                android.util.Log.i("PassiveDataService", "EVENT: $message")
-                serviceScope.launch(Dispatchers.Main) {
-                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
-                }
+                android.util.Log.i("PassiveDataService", "Sedentary tracking started")
             } else if (previousState.sedentaryStart != null && updatedState.sedentaryStart == null) {
-                val message = "Sedentary Tracking Stopped (Reset)"
-                android.util.Log.i("PassiveDataService", "EVENT: $message")
-                serviceScope.launch(Dispatchers.Main) {
-                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
-                }
+                android.util.Log.i("PassiveDataService", "Sedentary tracking reset")
             }
 
             // Log engine decision
             if (decision.reason != "monitoring") {
-                android.util.Log.i("PassiveDataService", "ENGINE DECISION: ${decision.reason} (ShouldRemind: ${decision.shouldRemind})")
+                android.util.Log.i("PassiveDataService", "Engine decision: ${decision.reason} (Nudge: ${decision.shouldRemind})")
             }
 
             PassiveRuntimeStore.inactivityState = updatedState
@@ -105,26 +93,14 @@ class PassiveDataService : PassiveListenerService() {
     }
 
     override fun onUserActivityInfoReceived(info: UserActivityInfo) {
-        android.util.Log.d("PassiveDataService", "onUserActivityInfoReceived: ${info.userActivityState}")
         val isAsleep = info.userActivityState == UserActivityState.USER_ACTIVITY_ASLEEP
-        val activityName = when (info.userActivityState) {
-            UserActivityState.USER_ACTIVITY_ASLEEP -> "Asleep"
-            UserActivityState.USER_ACTIVITY_PASSIVE -> "Passive/Still"
-            UserActivityState.USER_ACTIVITY_EXERCISE -> "Active/Exercise"
-            else -> "Unknown"
-        }
-
         if (PassiveRuntimeStore.isWatchSleeping != isAsleep) {
             PassiveRuntimeStore.isWatchSleeping = isAsleep
-            val message = if (isAsleep) "User is Asleep (Nudges Paused)" else "User is Awake"
-            android.util.Log.i("PassiveDataService", "EVENT: $message")
+            android.util.Log.i("PassiveDataService", "Sleep status changed: $isAsleep")
             
-            serviceScope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
+            serviceScope.launch {
                 ComplicationUpdater.updateAll(applicationContext)
             }
-        } else {
-            android.util.Log.d("PassiveDataService", "Activity Info: $activityName")
         }
     }
 }

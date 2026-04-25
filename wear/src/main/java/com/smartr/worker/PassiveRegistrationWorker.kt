@@ -29,10 +29,7 @@ class PassiveRegistrationWorker(
                 }
             }
 
-            if (requestedTypes.isEmpty()) {
-                return Result.success()
-            }
-
+            // Register even if requestedTypes is empty, because we still want UserActivityInfo (Sleep/Exercise)
             val config = PassiveListenerConfig.builder()
                 .setDataTypes(requestedTypes)
                 .setShouldUserActivityInfoBeRequested(true)
@@ -43,6 +40,7 @@ class PassiveRegistrationWorker(
                 PassiveDataService::class.java,
                 config
             ).await()
+            
             android.util.Log.i("PassiveRegistrationWorker", "SUCCESS: PassiveListenerService registered")
             Result.success()
         }.getOrElse {
