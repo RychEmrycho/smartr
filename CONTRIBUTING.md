@@ -44,6 +44,32 @@ We follow a strict conventional commit format for our automated changelogs:
 - `docs(...)`: Documentation only changes
 - `refactor(...)`: A code change that neither fixes a bug nor adds a feature
 
+## 🧪 Manual Testing & Simulation
+
+To test "Smart" features (like sleep or activity detection) without waiting for real-world events, you can simulate user states using ADB commands on your watch.
+
+### 1. Enable Synthetic Mode
+Run this first to allow fake data injection:
+```bash
+adb shell am broadcast -a "whs.USE_SYNTHETIC_PROVIDERS" com.google.android.wearable.healthservices
+```
+
+### 2. Simulate User States (Sleep Detection)
+Test how the app reacts when you fall asleep:
+- **Start Sleeping**: `adb shell am broadcast -a "whs.synthetic.user.START_SLEEPING" com.google.android.wearable.healthservices`
+- **Stop Sleeping**: `adb shell am broadcast -a "whs.synthetic.user.STOP_SLEEPING" com.google.android.wearable.healthservices`
+
+### 3. Simulate Activity (Suppress Nudges)
+Ensure the app pauses reminders when you are active:
+- **Start Walking**: `adb shell am broadcast -a "whs.synthetic.user.START_WALKING" com.google.android.wearable.healthservices`
+- **Stop Activity**: `adb shell am broadcast -a "whs.synthetic.user.STOP_EXERCISE" com.google.android.wearable.healthservices`
+
+### 4. Off-Body Simulation (Watch Removal)
+Since we use `SensorManager`, you can simulate taking the watch off:
+- **Watch Removed (0)**: `adb shell sensor set 34 0`
+- **Watch On-Wrist (1)**: `adb shell sensor set 34 1`
+*(Note: Sensor ID 34 is the default for Low Latency Off-Body, but it may vary by device).*
+
 ---
 
 Happy coding! Let's build a healthier world together.
