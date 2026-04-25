@@ -188,7 +188,7 @@ fun DashboardScreen(
     onManualSync: () -> Unit
 ) {
     val insightsEngine = remember { BehaviorInsightsEngine() }
-    val snapshot = insightsEngine.build(summaries)
+    val snapshot = remember(summaries) { insightsEngine.build(summaries) }
     val listState = rememberScalingLazyListState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -248,10 +248,15 @@ fun DashboardScreen(
             }
 
             item {
-                val scoreColor = when {
-                    snapshot.wellnessScore > 80 -> colorResource(R.color.wellness_high)
-                    snapshot.wellnessScore > 50 -> colorResource(R.color.wellness_mid)
-                    else -> colorResource(R.color.wellness_low)
+                val high = colorResource(R.color.wellness_high)
+                val mid = colorResource(R.color.wellness_mid)
+                val low = colorResource(R.color.wellness_low)
+                val scoreColor = remember(snapshot.wellnessScore) {
+                    when {
+                        snapshot.wellnessScore > 80 -> high
+                        snapshot.wellnessScore > 50 -> mid
+                        else -> low
+                    }
                 }
 
                 TitleCard(
@@ -292,10 +297,15 @@ fun DashboardScreen(
             }
 
             item {
-                val scoreColor = when {
-                    snapshot.wellnessScore > 80 -> colorResource(R.color.wellness_high)
-                    snapshot.wellnessScore > 50 -> colorResource(R.color.wellness_mid)
-                    else -> colorResource(R.color.wellness_low)
+                val high = colorResource(R.color.wellness_high)
+                val mid = colorResource(R.color.wellness_mid)
+                val low = colorResource(R.color.wellness_low)
+                val scoreColor = remember(snapshot.wellnessScore) {
+                    when {
+                        snapshot.wellnessScore > 80 -> high
+                        snapshot.wellnessScore > 50 -> mid
+                        else -> low
+                    }
                 }
 
                 AppCard(
