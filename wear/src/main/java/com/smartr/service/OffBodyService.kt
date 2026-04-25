@@ -29,8 +29,16 @@ class OffBodyService : Service(), SensorEventListener {
         // If still not found, search the full list for anything containing "offbody"
         if (offBodySensor == null) {
             val allSensors = sensorManager.getSensorList(Sensor.TYPE_ALL)
+            Log.d("OffBodyService", "--- START SENSOR DUMP ---")
+            allSensors.forEach { 
+                Log.d("OffBodyService", "Sensor: ${it.name} | Type: ${it.type} | StringType: ${it.stringType}")
+            }
+            Log.d("OffBodyService", "--- END SENSOR DUMP ---")
+            
             offBodySensor = allSensors.firstOrNull { 
-                it.stringType.contains("offbody", ignoreCase = true) 
+                it.stringType.contains("offbody", ignoreCase = true) ||
+                it.name.contains("off-body", ignoreCase = true) ||
+                it.name.contains("wrist", ignoreCase = true)
             }
         }
         
