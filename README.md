@@ -49,9 +49,9 @@ Smartr is evolving into a full-scale health ecosystem. Here is our path forward:
 - [x] **Sedentary Status**: View current sitting time via persistent phone notifications and widgets.
 
 ### 🏥 Phase 2: Health Intelligence
-- [x] **Health Connect Integration**: Sync data with Google Fit, Oura, or MyFitnessPal.
-- [x] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping.
-- [x] **Sedentary Export**: Automatically write sitting periods back to the health ecosystem as Activity sessions.
+- [x] **Health Connect Integration**: Deep integration with the Android health ecosystem.
+- [x] **Sleep Awareness**: Automatically suppress reminders when Health Connect detects you are sleeping (reading from apps like Samsung Health, Oura, etc.).
+- [x] **Smart Nudge Logic**: Watches now respect your sleep state via real-time mobile synchronization.
 
 ### 🚀 Phase 3: The Polish & AI (Next)
 - [ ] **Predictive Coaching**: AI-driven reminders that learn your daily schedule and nudge you *before* you reach your limit.

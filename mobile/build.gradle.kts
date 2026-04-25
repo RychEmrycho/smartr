@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.smartr.mobile"
+    namespace = "com.smartr"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.smartr.mobile"
+        applicationId = "com.smartr"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -18,6 +18,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {

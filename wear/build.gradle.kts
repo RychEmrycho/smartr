@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.smartr.wear"
+    namespace = "com.smartr"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.smartr.wear"
+        applicationId = "com.smartr"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
