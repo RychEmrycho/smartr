@@ -24,6 +24,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
@@ -53,4 +59,9 @@ dependencies {
     implementation("androidx.health:health-services-client:1.1.0-rc01")
     implementation("androidx.wear.watchface:watchface-complications-data:1.3.0")
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.3.0")
+
+    // Testing
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
