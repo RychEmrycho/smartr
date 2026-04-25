@@ -35,6 +35,10 @@ class PassiveDataService : PassiveListenerService() {
                 previous != null && current > previous
             } ?: false
 
+            if (movementDetected) {
+                android.util.Log.i("PassiveDataService", "EVENT: Physical movement detected (Steps)")
+            }
+
             val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
             PassiveRuntimeStore.lastPassiveCallbackAt = now
             val elapsedMinutes = previousCallbackAt?.let {
@@ -50,8 +54,15 @@ class PassiveDataService : PassiveListenerService() {
                 now = now,
                 settings = settings,
                 movementDetected = movementDetected,
-                isWatchSleeping = PassiveRuntimeStore.isWatchSleeping
+                isWatchSleeping = PassiveRuntimeStore.isWatchSleeping,
+                isOffBody = PassiveRuntimeStore.isOffBody
             )
+            
+            // Log engine decision
+            if (decision.reason != "monitoring") {
+                android.util.Log.i("PassiveDataService", "ENGINE DECISION: ${decision.reason} (ShouldRemind: ${decision.shouldRemind})")
+            }
+
             PassiveRuntimeStore.inactivityState = updatedState
             if (!movementDetected && updatedState.sedentaryStart != null && elapsedMinutes > 0) {
                 historyRepository.addSedentaryMinutesSample(
@@ -74,14 +85,24 @@ class PassiveDataService : PassiveListenerService() {
 
     override fun onUserActivityInfoReceived(info: UserActivityInfo) {
         val isAsleep = info.userActivityState == UserActivityState.USER_ACTIVITY_ASLEEP
+        val activityName = when (info.userActivityState) {
+            UserActivityState.USER_ACTIVITY_ASLEEP -> "Asleep"
+            UserActivityState.USER_ACTIVITY_PASSIVE -> "Passive/Still"
+            UserActivityState.USER_ACTIVITY_EXERCISE -> "Active/Exercise"
+            else -> "Unknown"
+        }
+
         if (PassiveRuntimeStore.isWatchSleeping != isAsleep) {
             PassiveRuntimeStore.isWatchSleeping = isAsleep
-            android.util.Log.d("PassiveDataService", "Local sleep status changed: $isAsleep")
+            val message = if (isAsleep) "User is Asleep (Nudges Paused)" else "User is Awake"
+            android.util.Log.i("PassiveDataService", "EVENT: $message")
             
-            // Trigger a UI and complication update immediately when sleep status changes
-            serviceScope.launch {
+            serviceScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
                 ComplicationUpdater.updateAll(applicationContext)
             }
+        } else {
+            android.util.Log.d("PassiveDataService", "Activity Info: $activityName")
         }
     }
 }
