@@ -38,12 +38,15 @@ class PassiveRegistrationWorker(
                 .setShouldUserActivityInfoBeRequested(true)
                 .build()
 
+            android.util.Log.d("PassiveRegistrationWorker", "Registering PassiveListener with types: $requestedTypes")
             client.setPassiveListenerServiceAsync(
                 PassiveDataService::class.java,
                 config
             ).await()
+            android.util.Log.i("PassiveRegistrationWorker", "SUCCESS: PassiveListenerService registered")
             Result.success()
         }.getOrElse {
+            android.util.Log.e("PassiveRegistrationWorker", "FAILURE: Failed to register PassiveListener", it)
             Result.retry()
         }
     }

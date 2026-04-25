@@ -36,7 +36,11 @@ class PassiveDataService : PassiveListenerService() {
             } ?: false
 
             if (movementDetected) {
-                android.util.Log.i("PassiveDataService", "EVENT: Physical movement detected (Steps)")
+                val message = "Physical Movement Detected"
+                android.util.Log.i("PassiveDataService", "EVENT: $message")
+                serviceScope.launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
 
             val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
@@ -49,8 +53,10 @@ class PassiveDataService : PassiveListenerService() {
             val historyRepository = HistoryRepository(applicationContext)
             val settings = settingsRepo.currentSettings()
             val engine = InactivityEngine()
+            
+            val previousState = PassiveRuntimeStore.inactivityState
             val (updatedState, decision) = engine.evaluate(
-                state = PassiveRuntimeStore.inactivityState,
+                state = previousState,
                 now = now,
                 settings = settings,
                 movementDetected = movementDetected,
@@ -58,6 +64,21 @@ class PassiveDataService : PassiveListenerService() {
                 isOffBody = PassiveRuntimeStore.isOffBody
             )
             
+            // Detect sedentary transitions
+            if (previousState.sedentaryStart == null && updatedState.sedentaryStart != null) {
+                val message = "Sedentary Tracking Started"
+                android.util.Log.i("PassiveDataService", "EVENT: $message")
+                serviceScope.launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } else if (previousState.sedentaryStart != null && updatedState.sedentaryStart == null) {
+                val message = "Sedentary Tracking Stopped (Reset)"
+                android.util.Log.i("PassiveDataService", "EVENT: $message")
+                serviceScope.launch(Dispatchers.Main) {
+                    android.widget.Toast.makeText(applicationContext, message, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+
             // Log engine decision
             if (decision.reason != "monitoring") {
                 android.util.Log.i("PassiveDataService", "ENGINE DECISION: ${decision.reason} (ShouldRemind: ${decision.shouldRemind})")

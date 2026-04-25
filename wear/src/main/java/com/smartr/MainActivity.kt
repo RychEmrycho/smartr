@@ -111,21 +111,28 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             settingsRepository.ensureDefaults()
         }
-        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
-            "passive_registration",
-            ExistingWorkPolicy.KEEP,
-            OneTimeWorkRequestBuilder<PassiveRegistrationWorker>().build()
-        )
 
         val permissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            if (isGranted) {
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            if (permissions[Manifest.permission.BODY_SENSORS] == true) {
                 startOffBodyService()
+            }
+            if (permissions[Manifest.permission.ACTIVITY_RECOGNITION] == true) {
+                WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                    "passive_registration",
+                    ExistingWorkPolicy.REPLACE,
+                    OneTimeWorkRequestBuilder<PassiveRegistrationWorker>().build()
+                )
             }
         }
 
-        permissionLauncher.launch(Manifest.permission.BODY_SENSORS)
+        permissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.BODY_SENSORS,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
+        )
 
         setContent {
             val settings by settingsRepository.settings.collectAsState(initial = SettingsRepository.DEFAULTS)
