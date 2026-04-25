@@ -20,18 +20,34 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
+import com.smartr.data.TrackingStateRepository
+import kotlinx.coroutines.flow.first
+
 class PassiveDataService : PassiveListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onNewDataPointsReceived(dataPoints: DataPointContainer) {
         serviceScope.launch {
+            val trackingRepo = TrackingStateRepository(applicationContext)
+            
+            // Hydrate cache if first run of this process
+            if (PassiveRuntimeStore.lastPassiveCallbackAt == null) {
+                val persistedState = trackingRepo.state.first()
+                val persistedSteps = trackingRepo.lastDailySteps.first()
+                val persistedOffBody = trackingRepo.isOffBody.first()
+                PassiveRuntimeStore.updateFromPersisted(persistedState, persistedSteps, persistedOffBody)
+            }
+
             val now = Instant.now()
             val latestDailySteps = dataPoints.getData(DataType.STEPS_DAILY)
                 .lastOrNull()
                 ?.value
+            
             val movementDetected = latestDailySteps?.let { current ->
                 val previous = PassiveRuntimeStore.lastDailySteps
                 PassiveRuntimeStore.lastDailySteps = current
+                // Persist steps immediately
+                launch { trackingRepo.updateSteps(current) }
                 previous != null && current > previous
             } ?: false
 
@@ -60,19 +76,14 @@ class PassiveDataService : PassiveListenerService() {
                 isOffBody = PassiveRuntimeStore.isOffBody
             )
             
-            // Detect sedentary transitions
-            if (previousState.sedentaryStart == null && updatedState.sedentaryStart != null) {
-                android.util.Log.i("PassiveDataService", "Sedentary tracking started")
-            } else if (previousState.sedentaryStart != null && updatedState.sedentaryStart == null) {
-                android.util.Log.i("PassiveDataService", "Sedentary tracking reset")
-            }
-
-            // Log engine decision
-            if (decision.reason != "monitoring") {
-                android.util.Log.i("PassiveDataService", "Engine decision: ${decision.reason} (Nudge: ${decision.shouldRemind})")
+            // Persist tracking state
+            if (updatedState != previousState) {
+                launch { trackingRepo.updateState(updatedState) }
             }
 
             PassiveRuntimeStore.inactivityState = updatedState
+            
+            // ... (rest of the logic remains the same)
             if (!movementDetected && updatedState.sedentaryStart != null && elapsedMinutes > 0) {
                 historyRepository.addSedentaryMinutesSample(
                     LocalDate.now(ZoneId.systemDefault()),

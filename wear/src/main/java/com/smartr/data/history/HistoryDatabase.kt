@@ -28,6 +28,15 @@ interface DailySummaryDao {
     @Query("SELECT * FROM DailySummary WHERE dateIso = :dateIso LIMIT 1")
     suspend fun findByDate(dateIso: String): DailySummary?
 
+    @Query("UPDATE DailySummary SET remindersSent = remindersSent + 1 WHERE dateIso = :dateIso")
+    suspend fun incrementSent(dateIso: String)
+
+    @Query("UPDATE DailySummary SET remindersAcknowledged = remindersAcknowledged + 1 WHERE dateIso = :dateIso")
+    suspend fun incrementAcknowledged(dateIso: String)
+
+    @Query("UPDATE DailySummary SET sedentaryMinutes = sedentaryMinutes + :minutes WHERE dateIso = :dateIso")
+    suspend fun addMinutes(dateIso: String, minutes: Int)
+
     @Query("SELECT * FROM DailySummary ORDER BY dateIso DESC LIMIT 30")
     fun latest30Days(): Flow<List<DailySummary>>
 }

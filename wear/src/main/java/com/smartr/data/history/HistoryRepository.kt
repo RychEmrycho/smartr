@@ -19,43 +19,29 @@ class HistoryRepository(private val context: Context) {
 
     suspend fun recordReminderSent(date: LocalDate) {
         val key = date.toString()
-        val existing = dao.findByDate(key)
-        dao.upsert(
-            DailySummary(
-                dateIso = key,
-                sedentaryMinutes = existing?.sedentaryMinutes ?: 0,
-                remindersSent = (existing?.remindersSent ?: 0) + 1,
-                remindersAcknowledged = existing?.remindersAcknowledged ?: 0
-            )
-        )
+        ensureDayExists(key)
+        dao.incrementSent(key)
         syncAll()
     }
 
     suspend fun recordReminderAcknowledged(date: LocalDate) {
         val key = date.toString()
-        val existing = dao.findByDate(key)
-        dao.upsert(
-            DailySummary(
-                dateIso = key,
-                sedentaryMinutes = existing?.sedentaryMinutes ?: 0,
-                remindersSent = existing?.remindersSent ?: 0,
-                remindersAcknowledged = (existing?.remindersAcknowledged ?: 0) + 1
-            )
-        )
+        ensureDayExists(key)
+        dao.incrementAcknowledged(key)
         syncAll()
     }
 
     suspend fun addSedentaryMinutesSample(date: LocalDate, minutes: Int) {
+        if (minutes <= 0) return
         val key = date.toString()
-        val existing = dao.findByDate(key)
-        dao.upsert(
-            DailySummary(
-                dateIso = key,
-                sedentaryMinutes = (existing?.sedentaryMinutes ?: 0) + minutes.coerceAtLeast(0),
-                remindersSent = existing?.remindersSent ?: 0,
-                remindersAcknowledged = existing?.remindersAcknowledged ?: 0
-            )
-        )
+        ensureDayExists(key)
+        dao.addMinutes(key, minutes)
         syncAll()
+    }
+
+    private suspend fun ensureDayExists(dateIso: String) {
+        if (dao.findByDate(dateIso) == null) {
+            dao.upsert(DailySummary(dateIso, 0, 0, 0))
+        }
     }
 }

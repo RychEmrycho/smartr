@@ -13,10 +13,16 @@ import com.smartr.logic.PassiveRuntimeStore
 
 import android.content.BroadcastReceiver
 import android.widget.Toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class OffBodyService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var offBodySensor: Sensor? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -49,6 +55,12 @@ class OffBodyService : Service(), SensorEventListener {
         if (previousState != isOffBody) {
             PassiveRuntimeStore.isOffBody = isOffBody
             Log.i("OffBodyService", "Watch status changed: ${if (isOffBody) "Off-wrist" else "On-wrist"}")
+            
+            // Persist the state
+            val repo = com.smartr.data.TrackingStateRepository(applicationContext)
+            kotlinx.coroutines.MainScope().launch {
+                repo.setOffBody(isOffBody)
+            }
         }
     }
 

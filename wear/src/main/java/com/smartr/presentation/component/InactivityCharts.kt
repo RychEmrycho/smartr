@@ -19,8 +19,8 @@ fun Sparkline(
 ) {
     if (data.isEmpty()) return
 
-    val strokePath = remember(data) { Path() }
-    val fillPath = remember(data) { Path() }
+    val strokePath = remember { Path() }
+    val fillPath = remember { Path() }
 
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
@@ -32,23 +32,24 @@ fun Sparkline(
             val minVal = data.minOrNull()?.toFloat() ?: 0f
             val range = (maxVal - minVal).coerceAtLeast(1f)
 
-            val points = data.mapIndexed { index, value ->
+            strokePath.reset()
+            fillPath.reset()
+
+            data.forEachIndexed { index, value ->
                 val x = index * spacing
                 val normalizedY = (value - minVal) / range
                 val y = height - (normalizedY * height)
-                androidx.compose.ui.geometry.Offset(x, y)
+                
+                if (index == 0) {
+                    strokePath.moveTo(x, y)
+                } else {
+                    strokePath.lineTo(x, y)
+                }
             }
 
-            strokePath.reset()
-            strokePath.moveTo(points[0].x, points[0].y)
-            for (i in 1 until points.size) {
-                strokePath.lineTo(points[i].x, points[i].y)
-            }
-
-            fillPath.reset()
             fillPath.addPath(strokePath)
-            fillPath.lineTo(points.last().x, height)
-            fillPath.lineTo(points.first().x, height)
+            fillPath.lineTo(width, height)
+            fillPath.lineTo(0f, height)
             fillPath.close()
 
             // Draw the filled area with a gradient

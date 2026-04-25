@@ -3,6 +3,7 @@ package com.smartr.logic
 import java.time.Instant
 
 object PassiveRuntimeStore {
+    // In-memory cache for fast access during service callbacks
     @Volatile
     var inactivityState: InactivityState = InactivityState(
         sedentaryStart = null,
@@ -21,6 +22,17 @@ object PassiveRuntimeStore {
 
     @Volatile
     var isOffBody: Boolean = false
+
+    // Initialize from persisted state
+    fun updateFromPersisted(
+        state: InactivityState,
+        steps: Long?,
+        offBody: Boolean
+    ) {
+        inactivityState = state
+        lastDailySteps = steps
+        isOffBody = offBody
+    }
 
     fun reset() {
         inactivityState = inactivityState.copy(
