@@ -20,9 +20,18 @@ class OffBodyService : Service(), SensorEventListener {
 
     private val debugReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "com.smartr.DEBUG_OFF_BODY") {
-                val isOffBody = intent.getBooleanExtra("isOffBody", false)
-                updateState(isOffBody, "DEBUG")
+            when (intent?.action) {
+                "com.smartr.DEBUG_OFF_BODY" -> {
+                    val isOffBody = intent.getBooleanExtra("isOffBody", false)
+                    updateState(isOffBody, "DEBUG")
+                }
+                "com.smartr.DEBUG_SLEEP" -> {
+                    val isAsleep = intent.getBooleanExtra("isAsleep", false)
+                    PassiveRuntimeStore.isWatchSleeping = isAsleep
+                    val message = if (isAsleep) "User is Asleep (Debug)" else "User is Awake (Debug)"
+                    Log.i("OffBodyService", "EVENT [DEBUG]: $message")
+                    Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -32,7 +41,10 @@ class OffBodyService : Service(), SensorEventListener {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         
         // Register debug receiver
-        val filter = android.content.IntentFilter("com.smartr.DEBUG_OFF_BODY")
+        val filter = android.content.IntentFilter().apply {
+            addAction("com.smartr.DEBUG_OFF_BODY")
+            addAction("com.smartr.DEBUG_SLEEP")
+        }
         // Must be EXPORTED to receive from adb shell
         registerReceiver(debugReceiver, filter, Context.RECEIVER_EXPORTED)
         
