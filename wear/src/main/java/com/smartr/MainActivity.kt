@@ -48,6 +48,25 @@ class MainActivity : ComponentActivity() {
             settingsRepository.ensureDefaults()
         }
 
+        val trackingStateRepository = com.smartr.data.TrackingStateRepository(applicationContext)
+        lifecycleScope.launch {
+            launch {
+                trackingStateRepository.state.collect { state ->
+                    com.smartr.logic.PassiveRuntimeStore.inactivityState = state
+                }
+            }
+            launch {
+                trackingStateRepository.lastDailySteps.collect { steps ->
+                    com.smartr.logic.PassiveRuntimeStore.lastDailySteps = steps
+                }
+            }
+            launch {
+                trackingStateRepository.isOffBody.collect { isOffBody ->
+                    com.smartr.logic.PassiveRuntimeStore.isOffBody = isOffBody
+                }
+            }
+        }
+
         val permissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->

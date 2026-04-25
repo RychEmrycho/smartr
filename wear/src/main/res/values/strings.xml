@@ -33,4 +33,8 @@
     <string name="theme_auto">Auto</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="off_body_service_channel_name">Off-body Detection</string>
+    <string name="off_body_service_channel_description">Ensures accurate tracking by detecting when the watch is off-wrist.</string>
+    <string name="off_body_service_notification_title">Smartr Active</string>
+    <string name="off_body_service_notification_text">Monitoring wrist status</string>
 </resources>

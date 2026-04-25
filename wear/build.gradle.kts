@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.smartr"
-        minSdk = 30
+        minSdk = 35
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -37,7 +37,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
@@ -62,7 +62,7 @@ dependencies {
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.3.0")
 
     // Testing
-    testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
