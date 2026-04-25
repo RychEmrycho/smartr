@@ -33,7 +33,8 @@ class OffBodyService : Service(), SensorEventListener {
         
         // Register debug receiver
         val filter = android.content.IntentFilter("com.smartr.DEBUG_OFF_BODY")
-        registerReceiver(debugReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        // Must be EXPORTED to receive from adb shell
+        registerReceiver(debugReceiver, filter, Context.RECEIVER_EXPORTED)
         
         // Try to find the best available off-body sensor
         // 34 = TYPE_LOW_LATENCY_OFFBODY_DETECT (API 34+)
