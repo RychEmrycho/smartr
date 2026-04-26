@@ -36,7 +36,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     val insights: StateFlow<InsightSnapshot> = summaries
         .map { insightsEngine.build(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightSnapshot(0, 0, 100, 100, 0))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightSnapshot(0, 0, 100, 100, 0, 1, 0f, "Novice", 0))
 
     val trendData: StateFlow<List<Int>> = summaries
         .map { list -> list.takeLast(7).map { it.sedentaryMinutes } }

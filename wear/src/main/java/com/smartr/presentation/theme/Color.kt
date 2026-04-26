@@ -54,3 +54,10 @@ val LightOutline = Color(0xFF74777F)
 
 val ErrorRed = Color(0xFFBA1A1A)
 val ErrorContainerRed = Color(0xFFFFDAD6)
+
+// Gamification colors
+val LevelGold = Color(0xFFFFD700)
+val RankNovice = Color(0xFFA1887F)
+val RankActive = Color(0xFF64B5F6)
+val RankFlowMaster = Color(0xFFBA68C8)
+val RankZenMaster = Color(0xFFFF8A65)

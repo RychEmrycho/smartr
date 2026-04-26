@@ -19,6 +19,10 @@ import java.time.LocalTime
 import kotlinx.coroutines.launch
 
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.material.icons.filled.Sync
 import com.smartr.R
 
 enum class SettingType {
@@ -30,6 +34,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
+    val isSyncing by viewModel.isSyncing.collectAsState()
     var activeEditor by remember { mutableStateOf(SettingType.NONE) }
     val scope = rememberCoroutineScope()
     val listState = rememberScalingLazyListState()
@@ -308,6 +313,37 @@ fun SettingsScreen(
                         title = { Text(stringResource(R.string.settings_movement_buffer)) },
                         subtitle = { Text(subtitle) }
                     )
+                }
+
+                item {
+                    val haptic = LocalHapticFeedback.current
+                    
+                    FilledTonalButton(
+                        onClick = {
+                            if (!isSyncing) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.triggerManualSync()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        enabled = !isSyncing
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isSyncing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (isSyncing) stringResource(R.string.settings_syncing) 
+                                else stringResource(R.string.dashboard_sync_now)
+                            )
+                        }
+                    }
                 }
             }
         }

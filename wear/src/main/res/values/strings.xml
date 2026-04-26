@@ -1,13 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Smartr</string>
-    <string name="dashboard_mark_done">Mark as Done</string>
+    <string name="dashboard_mark_done">Take a Break</string>
     <string name="dashboard_sync_now">Sync Now</string>
-    <string name="dashboard_wellness_score">Wellness Score</string>
-    <string name="dashboard_activity_insights">Activity Insights</string>
+    <string name="settings_syncing">Syncing...</string>
+    <string name="dashboard_vitality_score">Vitality Score</string>
+    <string name="dashboard_info_how_it_works">How it works</string>
+    <string name="vitality_info_title">Vitality Guide</string>
+    <string name="vitality_info_wellness_title">Wellness Score</string>
+    <string name="vitality_info_wellness_desc">Based on today\'s activity and reminder responses.</string>
+    <string name="vitality_info_level_title">Level &amp; XP</string>
+    <string name="vitality_info_level_desc">Earn XP by moving and acknowledging reminders.</string>
+    <string name="vitality_info_xp_rates">+50 XP per break, -1 XP per 10m sitting.</string>
+    <string name="vitality_info_ranks_title">Ranks</string>
+    <string name="vitality_info_ranks_desc">Novice (1), Active (5), Flow (10), Zen (20).</string>
+    <string name="dashboard_level_format">Lvl %d</string>
+    <string name="dashboard_xp_format">%d XP</string>
+    <string name="rank_novice">Novice</string>
+    <string name="rank_active">Active</string>
+    <string name="rank_flow_master">Flow Master</string>
+    <string name="rank_zen_master">Zen Master</string>
+    <string name="dashboard_activity_insights">Activity Trends</string>
     <string name="dashboard_7day_trend">7-Day Trend</string>
     <string name="dashboard_view_history">View History</string>
     <string name="dashboard_settings">Settings</string>
+    <string name="dashboard_help_guide">Help &amp; Guide</string>
     <string name="dashboard_wellness_positive">You\'re doing great! Keep moving.</string>
     <string name="dashboard_streak_format">🔥 %d day streak</string>
     <string name="dashboard_avg_sedentary_format">Avg Sedentary: %dm</string>

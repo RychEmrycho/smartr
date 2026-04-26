@@ -25,6 +25,8 @@ import androidx.wear.compose.material3.*
 import com.smartr.R
 import com.smartr.Screen
 import com.smartr.presentation.component.Sparkline
+import com.smartr.presentation.component.VitalityRing
+import com.smartr.presentation.theme.*
 
 @Composable
 fun DashboardScreen(
@@ -46,7 +48,19 @@ fun DashboardScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item(key = "header") {
-                ListHeader { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium) }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = insights.rank.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = getRankColor(insights.rank),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.dashboard_streak_format, insights.currentStreak),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WellnessMid
+                    )
+                }
             }
 
             item(key = "mark_done") {
@@ -56,7 +70,7 @@ fun DashboardScreen(
                         viewModel.markAsDone()
                         Toast.makeText(context, context.getString(R.string.dashboard_mark_done), Toast.LENGTH_SHORT).show()
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -66,59 +80,31 @@ fun DashboardScreen(
                 }
             }
 
-            item(key = "sync") {
-                FilledTonalButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        viewModel.triggerManualSync()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.dashboard_sync_now))
-                    }
-                }
-            }
-
-            item(key = "wellness_score") {
+            item(key = "vitality_score") {
                 val scoreColor = getWellnessColor(insights.wellnessScore)
 
-                TitleCard(
-                    onClick = { },
-                    title = { Text(stringResource(R.string.dashboard_wellness_score)) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        titleColor = scoreColor
-                    ),
-                    subtitle = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(
-                                    progress = { insights.wellnessScore / 100f },
-                                    modifier = Modifier.fillMaxSize(),
-                                    colors = ProgressIndicatorDefaults.colors(
-                                        indicatorColor = scoreColor,
-                                        trackColor = scoreColor.copy(alpha = 0.2f)
-                                    ),
-                                    strokeWidth = 4.dp
-                                )
-                                Text(
-                                    text = "${insights.wellnessScore}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.dashboard_streak_format, insights.currentStreak),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(stringResource(R.string.dashboard_wellness_positive), style = MaterialTheme.typography.labelSmall)
+                    VitalityRing(
+                        wellnessScore = insights.wellnessScore,
+                        xpProgress = insights.xpProgress,
+                        level = insights.level,
+                        scoreColor = scoreColor,
+                        modifier = Modifier.size(100.dp)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.dashboard_vitality_score),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.dashboard_xp_format, insights.totalXp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -165,13 +151,13 @@ fun DashboardScreen(
                 }
             }
 
-            item(key = "history_btn") {
+            item(key = "help_guide_btn") {
                 Button(
-                    onClick = { navController.navigate(Screen.History.route) },
-                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { navController.navigate(Screen.VitalityInfo.route) },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     colors = ButtonDefaults.filledTonalButtonColors()
                 ) {
-                    Text(stringResource(R.string.dashboard_view_history))
+                    Text(stringResource(R.string.dashboard_help_guide))
                 }
             }
 
@@ -191,8 +177,18 @@ fun DashboardScreen(
 @Composable
 private fun getWellnessColor(score: Int): androidx.compose.ui.graphics.Color {
     return when {
-        score > 80 -> colorResource(R.color.wellness_high)
-        score > 50 -> colorResource(R.color.wellness_mid)
-        else -> colorResource(R.color.wellness_low)
+        score > 80 -> WellnessHigh
+        score > 50 -> WellnessMid
+        else -> WellnessLow
+    }
+}
+
+@Composable
+private fun getRankColor(rank: String): androidx.compose.ui.graphics.Color {
+    return when (rank) {
+        "Zen Master" -> RankZenMaster
+        "Flow Master" -> RankFlowMaster
+        "Active" -> RankActive
+        else -> RankNovice
     }
 }

@@ -14,7 +14,9 @@ It is built to handle sedentary habits specifically. The app runs entirely on yo
 - **Sleep detection**: Suppresses notifications while the system detects you are asleep.
 
 ### On the watch
-- **Dashboard**: A quick look at your sitting time, wellness score, and recent trends.
+- **Vitality System**: A gamified experience with levels, XP, and ranks (Novice to Zen Master).
+- **Dashboard**: A quick look at your sitting time, level progress via the Vitality Ring, and 7-day trends.
+- **Help & Guide**: Built-in guide explaining the scoring and leveling mechanics.
 - **Watch faces**: Streaks and scores available as complications.
 - **Manual logs**: Option to record a break manually to reset your timers.
 
@@ -36,7 +38,10 @@ It is built to handle sedentary habits specifically. The app runs entirely on yo
 - [x] History dashboard for long-term trends.
 - [x] Persistent storage for yearly progress.
 
-### Phase 3: Refinement (Current)
+### Phase 3: Refinement (Done)
+- [x] Gamified Vitality system (Levels, XP, Ranks).
+- [x] Revamped UI/UX with simplified navigation.
+- [x] Integrated Help & Guide for users.
 - [ ] Predictive reminders based on your schedule.
 - [ ] Custom haptics and sounds.
 - [ ] Improved charts and visualizations.

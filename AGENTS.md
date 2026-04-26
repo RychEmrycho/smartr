@@ -29,6 +29,8 @@ This file contains the project conventions and technical rules for all AI coding
 - **Layouts**: Use `ScreenScaffold` and `ScalingLazyColumn`. Optimize for different screen shapes/sizes (Circular vs. Square).
 - **Navigation**: `SwipeDismissableNavHost` is required.
 - **Wear OS 5**: Support advanced complications and haptic feedback profiles where applicable.
+- **Wellness Score**: Now part of the broader **Vitality System**.
+- **Vitality System**: Uses `BehaviorInsightsEngine` to calculate Levels, XP (+50 per break, -1 per 10m sitting), and Ranks (`Novice`, `Active`, `Flow Master`, `Zen Master`).
 - **Persistence**: 
     - **Room**: For structured daily/history data.
     - **DataStore**: For lightweight user preferences.
@@ -45,7 +47,7 @@ This file contains the project conventions and technical rules for all AI coding
 - **MVVM Architecture**: 
     - Use `ViewModel` for all screen-level state and logic.
     - Composables should be stateless or use ViewModels for data.
-    - Use `StateFlow` to expose reactive state to the UI.
+    - Use `StateFlow` to expose reactive state to the UI (e.g., handling loading/syncing states).
 - **UI Performance**: 
     - Avoid object allocations (e.g., `Path()`, `Offset()`) inside `DrawScope` or frequent re-compositions.
     - Use `remember` with keys correctly. 

@@ -27,6 +27,7 @@ import com.smartr.data.ThemePreference
 import com.smartr.presentation.DashboardScreen
 import com.smartr.presentation.HistoryScreen
 import com.smartr.presentation.SettingsScreen
+import com.smartr.presentation.VitalityInfoScreen
 import com.smartr.presentation.theme.SmartRTheme
 import com.smartr.service.OffBodyService
 import com.smartr.worker.PassiveRegistrationWorker
@@ -36,6 +37,7 @@ sealed class Screen(val route: String) {
     object Dashboard : Screen("dashboard")
     object History : Screen("history")
     object Settings : Screen("settings")
+    object VitalityInfo : Screen("vitality_info")
 }
 
 class MainActivity : ComponentActivity() {
@@ -109,6 +111,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Screen.Settings.route) {
                             SettingsScreen()
+                        }
+                        composable(Screen.VitalityInfo.route) {
+                            VitalityInfoScreen()
                         }
                     }
                 }
