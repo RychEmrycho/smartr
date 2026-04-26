@@ -48,7 +48,10 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val trendData: StateFlow<List<Int>> = summaries
-        .map { list -> list.takeLast(7).map { it.sedentarySeconds } }
+        .map { list -> 
+            // Take the 7 most recent days (list is sorted DESC), then reverse to show chronological order
+            list.take(7).reversed().map { it.sedentarySeconds }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isPhoneConnected = MutableStateFlow(false)

@@ -96,7 +96,7 @@ fun HistoryScreen(
             }
 
             items(
-                items = summaries.reversed().take(10),
+                items = summaries.take(10), // summaries is already sorted DESC from DAO
                 key = { it.dateIso }
             ) { summary ->
                 val date = try {

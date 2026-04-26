@@ -31,15 +31,20 @@ fun Sparkline(
             val spacing = width / (data.size - 1)
             val maxVal = data.maxOrNull()?.toFloat()?.coerceAtLeast(1f) ?: 1f
             val minVal = data.minOrNull()?.toFloat() ?: 0f
-            val range = (maxVal - minVal).coerceAtLeast(1f)
+            
+            // To prevent a flat line when all data is the same, 
+            // we ensure the range is at least 10% of the max value
+            val dataRange = maxVal - minVal
+            val displayRange = if (dataRange < 1f) maxVal * 0.2f else dataRange
+            val displayMin = if (dataRange < 1f) minVal - (maxVal * 0.1f) else minVal
 
             strokePath.reset()
             fillPath.reset()
 
             data.forEachIndexed { index, value ->
                 val x = index * spacing
-                val normalizedY = (value - minVal) / range
-                val y = height - (normalizedY * height)
+                val normalizedY = if (displayRange == 0f) 0.5f else (value - displayMin) / displayRange
+                val y = height - (normalizedY.coerceIn(0f, 1f) * height)
                 
                 if (index == 0) {
                     strokePath.moveTo(x, y)
@@ -78,8 +83,8 @@ fun Sparkline(
             // Draw dots to mark each day
             data.forEachIndexed { index, value ->
                 val x = index * spacing
-                val normalizedY = (value - minVal) / range
-                val y = height - (normalizedY * height)
+                val normalizedY = if (displayRange == 0f) 0.5f else (value - displayMin) / displayRange
+                val y = height - (normalizedY.coerceIn(0f, 1f) * height)
                 
                 drawCircle(
                     color = color,

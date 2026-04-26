@@ -88,12 +88,22 @@ class HistoryRepository(private val context: Context) {
             
             val isLastWeek = i > 7
             val baseSittingSec = 300 * 60
+            // Create significant daily variance (between -120 and +120 minutes)
+            val jitter = (-120..120).random() * 60
             
             val sittingSec = when (scenario) {
-                "BETTER" -> if (isLastWeek) 450 * 60 else 250 * 60
-                "WORSE" -> if (isLastWeek) 200 * 60 else 500 * 60
-                else -> baseSittingSec + (-50..50).random() * 60
-            }
+                "BETTER" -> {
+                    // Gradual improvement: older days in the week sit more
+                    val improvementTrend = (i * 30 * 60) // Older days sit more
+                    (200 * 60) + improvementTrend + jitter
+                }
+                "WORSE" -> {
+                    // Gradual decline: newer days sit more
+                    val declineTrend = ((14 - i) * 30 * 60)
+                    (200 * 60) + declineTrend + jitter
+                }
+                else -> baseSittingSec + jitter
+            }.coerceAtLeast(1800) // Minimum 30 mins sedentary
             
             val hourly = MutableList(24) { 0 }
             // Distribute sitting seconds across the day with a hotspot at 14:00
