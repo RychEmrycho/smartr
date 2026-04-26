@@ -23,6 +23,7 @@ This file contains the project conventions and technical rules for all AI coding
 - **Kotlin 2.0+**: Use `.entries` for Enums. Prefer `val` over `var`.
 - **KSP**: Used for Room annotation processing.
 - **Gradle**: Kotlin DSL (`.gradle.kts`).
+- **Terminology**: Always use **"sedentary"** instead of "sitting" or "sit" in user-facing strings and internal logic to ensure consistency.
 
 ### Wear OS (`:wear`) - API 35+ Target
 - **Compose Material 3**: Use Wear M3 components (`TitleCard`, `AppCard`, `Button`, `Stepper`).
@@ -33,9 +34,12 @@ This file contains the project conventions and technical rules for all AI coding
 - **Vitality System**: Uses `BehaviorInsightsEngine` to calculate Levels, XP (+50 per break, -1 per 10m sitting), Ranks (`Novice`, `Active`, `Flow Master`, `Zen Master`), and Weekly Performance Grades.
 - **Duration Formatting**: Always use `DurationFormatter` for sedentary time and records to ensure concise, human-readable units (e.g., `12d`, `2h`, `3m 2s`).
 - **Persistence**: 
-    - **Room**: For structured daily/history data.
+    - **Room**: For structured daily/history data. Use **Enums** with `@TypeConverter` instead of magic strings for state and event types.
     - **DataStore**: For lightweight user preferences.
     - **TrackingStateRepository**: MUST be used to persist critical runtime states (sedentary start time, step counts, off-body status) to survive process death and watch restarts.
+- **State Integrity**: 
+    - **Reconciliation**: State-based tracking MUST include a reconciliation mechanism (e.g., `reconcileInterruptedEvents`) to handle device restarts, crashes, or battery death.
+    - **Mock Data**: Any change to the database schema or event logic MUST be accompanied by an update to the `injectMockScenario` function to ensure testing data remains valid and realistic.
 - **Standalone Architecture**: The watch is the source of truth. Do NOT rely on phone synchronization for real-time tracking decisions (e.g., sleep or activity).
 - **Off-Body Detection**: Use the native `OffBodyService` (SensorManager) to pause tracking. Reminders MUST be suppressed if `PassiveRuntimeStore.isOffBody` is true.
 
@@ -65,5 +69,6 @@ This file contains the project conventions and technical rules for all AI coding
 ## Agent Behavior
 - **Context**: Always read the relevant `build.gradle.kts` to verify dependency versions before adding new libraries.
 - **Surgical Edits**: Prefer `replace_file_content` or `multi_replace_file_content` over complete file overwrites.
+- **Plan Approval**: Agents MUST NOT proceed from PLANNING to EXECUTION without explicit user approval of the implementation plan.
 - **Commit Approval**: Agents MUST NOT commit changes without explicit user approval. Always summarize the changes and ask "Shall I commit these changes?" before running any git commit commands.
 - **Verification**: After modifying UI or Logic, verify the build passes via `./gradlew assembleDebug`.
