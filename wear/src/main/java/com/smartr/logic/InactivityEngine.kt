@@ -16,7 +16,8 @@ data class InactivityState(
 
 data class InactivityDecision(
     val shouldRemind: Boolean,
-    val reason: String
+    val reason: String,
+    val isMovementReset: Boolean = false
 )
 
 class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
@@ -49,7 +50,7 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
             val (movedState, decision) = processMovement(currentState, now, bufferThreshold)
             currentState = movedState
             // Only exit early if the movement was significant enough to reset the sedentary timer
-            if (decision.reason == "movement_reset") {
+            if (decision.isMovementReset) {
                 return currentState to decision.also { Log.d(TAG, "evaluate: movement reset") }
             }
             Log.v(TAG, "evaluate: short movement detected, continuing evaluation")
@@ -107,7 +108,7 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
                 lastMovement = now,
                 lastSignificantMovementAt = now,
                 lastReminderAt = null
-            ) to InactivityDecision(false, "movement_reset")
+            ) to InactivityDecision(false, "movement_reset", isMovementReset = true)
         }
         Log.d(TAG, "Process movement: ${result.second.reason} (duration: ${movementDuration.seconds}s, threshold: ${bufferThreshold.seconds}s)")
         return result

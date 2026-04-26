@@ -147,6 +147,10 @@ class PassiveDataService : PassiveListenerService() {
             )
         }
 
+        if (decision.isMovementReset) {
+            historyRepository.closeActiveSedentaryEvent()
+        }
+
         if (decision.shouldRemind) {
             val scheduler = ReminderScheduler(applicationContext)
             scheduler.ensureChannel()

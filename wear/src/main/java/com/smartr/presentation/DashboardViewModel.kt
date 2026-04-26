@@ -14,6 +14,7 @@ import com.smartr.logic.BehaviorInsightsEngine
 import com.smartr.logic.InsightSnapshot
 import com.smartr.logic.PassiveRuntimeStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -82,6 +83,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             PassiveRuntimeStore.reset()
             trackingRepository.reset()
             historyRepository.recordReminderAcknowledged(LocalDate.now())
+            historyRepository.closeActiveSedentaryEvent()
             ComplicationUpdater.updateAll(getApplication())
         }
     }
@@ -103,5 +105,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun getSummary(dateIso: String): DailySummary? {
         return summaries.value.find { it.dateIso == dateIso }
+    }
+
+    fun getEvents(dateIso: String): Flow<List<com.smartr.data.history.SedentaryEvent>> {
+        return historyRepository.eventsForDay(LocalDate.parse(dateIso))
     }
 }
