@@ -64,4 +64,5 @@ This file contains the project conventions and technical rules for all AI coding
 ## Agent Behavior
 - **Context**: Always read the relevant `build.gradle.kts` to verify dependency versions before adding new libraries.
 - **Surgical Edits**: Prefer `replace_file_content` or `multi_replace_file_content` over complete file overwrites.
+- **Commit Approval**: Agents MUST NOT commit changes without explicit user approval. Always summarize the changes and ask "Shall I commit these changes?" before running any git commit commands.
 - **Verification**: After modifying UI or Logic, verify the build passes via `./gradlew assembleDebug`.
