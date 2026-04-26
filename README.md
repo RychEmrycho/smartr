@@ -29,20 +29,21 @@ It is built to handle sedentary habits specifically. The app runs entirely on yo
 
 ## Progress
 
-### Phase 1: Core Watch App (Done)
+### Phase 1: Core Watch App
 - [x] Background activity and sedentary tracking.
 - [x] Native sleep and off-body detection.
 - [x] On-watch dashboard and wellness scores.
 
-### Phase 2: Phone Integration (Done)
+### Phase 2: Phone Integration
 - [x] Background synchronization between watch and phone.
 - [x] History dashboard for long-term trends.
 - [x] Persistent storage for yearly progress.
 
-### Phase 3: Refinement (Done)
+### Phase 3: Refinement
 - [x] Gamified Vitality system (Levels, XP, Ranks).
 - [x] Revamped UI/UX with simplified navigation.
 - [x] Integrated Help & Guide for users.
+- [ ] Implement buffer/cooldown for "Take a break" button to prevent spam.
 - [ ] Predictive reminders based on your schedule.
 - [ ] Custom haptics and sounds.
 - [ ] Improved charts and visualizations.
