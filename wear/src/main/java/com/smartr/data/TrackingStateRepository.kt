@@ -20,6 +20,7 @@ class TrackingStateRepository(private val context: Context) {
         private val LAST_DAILY_STEPS = longPreferencesKey("last_daily_steps")
         private val SEDENTARY_BUFFER = longPreferencesKey("last_significant_movement")
         private val IS_OFF_BODY = booleanPreferencesKey("is_off_body")
+        private val ACTIVE_SESSION_ID = androidx.datastore.preferences.core.stringPreferencesKey("active_session_id")
     }
 
     val state: Flow<InactivityState> = context.trackingDataStore.data.map { prefs ->
@@ -33,6 +34,7 @@ class TrackingStateRepository(private val context: Context) {
 
     val lastDailySteps: Flow<Long?> = context.trackingDataStore.data.map { it[LAST_DAILY_STEPS] }
     val isOffBody: Flow<Boolean> = context.trackingDataStore.data.map { it[IS_OFF_BODY] ?: false }
+    val activeSessionId: Flow<String?> = context.trackingDataStore.data.map { it[ACTIVE_SESSION_ID] }
 
     suspend fun updateState(state: InactivityState) {
         context.trackingDataStore.edit { prefs ->
@@ -50,11 +52,19 @@ class TrackingStateRepository(private val context: Context) {
     suspend fun setOffBody(offBody: Boolean) {
         context.trackingDataStore.edit { it[IS_OFF_BODY] = offBody }
     }
+
+    suspend fun setActiveSessionId(sessionId: String?) {
+        context.trackingDataStore.edit { prefs ->
+            if (sessionId != null) prefs[ACTIVE_SESSION_ID] = sessionId
+            else prefs.remove(ACTIVE_SESSION_ID)
+        }
+    }
     
     suspend fun reset() {
         context.trackingDataStore.edit { 
             it.remove(SEDENTARY_START)
             it.remove(LAST_REMINDER)
+            it.remove(ACTIVE_SESSION_ID)
         }
     }
 }

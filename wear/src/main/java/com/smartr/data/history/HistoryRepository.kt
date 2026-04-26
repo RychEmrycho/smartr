@@ -3,25 +3,34 @@ package com.smartr.data.history
 import android.content.Context
 import com.smartr.data.WearSyncManager
 import com.smartr.data.SettingsRepository
+import com.smartr.data.TrackingStateRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.LocalTime
+import java.time.Instant
+import java.time.Duration
+import java.util.UUID
 
 class HistoryRepository(private val context: Context) {
     private val database = HistoryDatabase.get(context)
     private val dao = database.dailySummaryDao()
     private val pbDao = database.personalBestDao()
-    private val eventDao = database.sedentaryEventDao()
+    private val eventDao = database.eventDao()
     private val syncManager = WearSyncManager(context)
     private val settingsRepository = SettingsRepository(context)
+    private val trackingRepository = TrackingStateRepository(context)
 
     fun summaries(): Flow<List<DailySummary>> = dao.latest30Days()
 
     fun personalBests(): Flow<List<PersonalBest>> = pbDao.getAll()
 
-    fun eventsForDay(date: LocalDate): Flow<List<SedentaryEvent>> = eventDao.eventsForDay(date.toString())
+    fun eventsForDay(date: LocalDate): Flow<List<Event>> {
+        val start = date.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toString()
+        val end = date.plusDays(1).atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toString()
+        return eventDao.eventsForRange(start, end)
+    }
 
     private suspend fun syncAll() {
         val latest: List<DailySummary> = summaries().first()
@@ -33,13 +42,14 @@ class HistoryRepository(private val context: Context) {
         ensureDayExists(key)
         dao.incrementSent(key)
         
+        val sessionId = trackingRepository.activeSessionId.first()
+
         // Log event
-        eventDao.insert(SedentaryEvent(
-            dateIso = key,
-            startTimeMillis = System.currentTimeMillis(),
-            endTimeMillis = System.currentTimeMillis(),
-            type = SedentaryEventType.REMINDER_SENT,
-            durationSeconds = durationSeconds
+        eventDao.insert(Event(
+            timestamp = Instant.now().toString(),
+            type = EventType.REMINDER_SENT,
+            sessionId = sessionId,
+            metadata = mapOf("duration" to durationSeconds.toString())
         ))
         
         syncAll()
@@ -74,46 +84,59 @@ class HistoryRepository(private val context: Context) {
         }
 
         // Manage Sedentary Event
-        val activeEvent = eventDao.getActiveEvent()
-        val now = System.currentTimeMillis()
-        if (activeEvent != null && activeEvent.dateIso == key && activeEvent.type == SedentaryEventType.START) {
-            // Update existing ongoing session
-            val updatedDuration = activeEvent.durationSeconds + seconds
-            eventDao.update(activeEvent.copy(durationSeconds = updatedDuration))
-        } else {
+        val activeSessionId = trackingRepository.activeSessionId.first()
+        
+        if (activeSessionId == null) {
             // Start a new sedentary session
-            eventDao.insert(SedentaryEvent(
-                dateIso = key,
-                startTimeMillis = now - (seconds * 1000L),
-                endTimeMillis = null,
-                type = SedentaryEventType.START,
-                durationSeconds = seconds
+            val newSessionId = UUID.randomUUID().toString()
+            trackingRepository.setActiveSessionId(newSessionId)
+            eventDao.insert(Event(
+                timestamp = Instant.now().minusSeconds(seconds.toLong()).toString(),
+                type = EventType.SEDENTARY_START,
+                sessionId = newSessionId,
+                metadata = null
             ))
+        } else {
+            // Metadata for START events could be updated if needed, 
+            // but usually we just log START and then STOP with duration.
         }
 
         syncAll()
     }
 
     suspend fun closeActiveSedentaryEvent(reason: String = "Movement") {
-        val activeEvent = eventDao.getActiveEvent()
-        if (activeEvent != null && activeEvent.type == SedentaryEventType.START) {
-            eventDao.update(activeEvent.copy(
-                endTimeMillis = System.currentTimeMillis(),
-                type = SedentaryEventType.STOPPED,
-                metadata = reason
+        val sessionId = trackingRepository.activeSessionId.first()
+        if (sessionId != null) {
+            // Find when this session started to calculate final duration
+            val startEvent = eventDao.getLatestSessionEvent(EventType.SEDENTARY_START)
+            val duration = if (startEvent != null && startEvent.sessionId == sessionId) {
+                Duration.between(Instant.parse(startEvent.timestamp), Instant.now()).toSeconds().toInt()
+            } else 0
+
+            eventDao.insert(Event(
+                timestamp = Instant.now().toString(),
+                type = EventType.SEDENTARY_STOPPED,
+                sessionId = sessionId,
+                metadata = mapOf(
+                    "duration" to duration.toString(),
+                    "reason" to reason
+                )
             ))
+            trackingRepository.setActiveSessionId(null)
         }
     }
 
     suspend fun reconcileInterruptedEvents() {
-        val activeEvent = eventDao.getActiveEvent()
-        if (activeEvent != null && activeEvent.type == SedentaryEventType.START) {
-            // Found a hanging event from a previous run. Mark it as RESET.
-            eventDao.update(activeEvent.copy(
-                endTimeMillis = System.currentTimeMillis(),
-                type = SedentaryEventType.RESET,
-                metadata = "Device restart"
+        val sessionId = trackingRepository.activeSessionId.first()
+        if (sessionId != null) {
+            // Found a hanging session. Mark it as RESET.
+            eventDao.insert(Event(
+                timestamp = Instant.now().toString(),
+                type = EventType.SEDENTARY_RESET,
+                sessionId = sessionId,
+                metadata = mapOf("reason" to "Device restart")
             ))
+            trackingRepository.setActiveSessionId(null)
         }
     }
 
@@ -215,41 +238,68 @@ class HistoryRepository(private val context: Context) {
         
         for (i in 0..14) {
             val date = today.minusDays(i.toLong())
-            val dateIso = date.toString()
             
-            val morningStart = date.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val morningEnd = morningStart + 5400000 // 90m
+            val morningStart = date.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant()
+            val morningEnd = morningStart.plusSeconds(5400) // 90m
+            val session1Id = UUID.randomUUID().toString()
             
-            if (morningStart < nowMillis) {
-                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-                if (morningStart + (currentThreshold * 1000L) < nowMillis) {
-                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart + (currentThreshold * 1000L), endTimeMillis = morningStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT, durationSeconds = currentThreshold))
+            if (morningStart.toEpochMilli() < nowMillis) {
+                eventDao.insert(Event(timestamp = morningStart.toString(), type = EventType.SEDENTARY_START, sessionId = session1Id, metadata = null))
+                if (morningStart.plusSeconds(currentThreshold.toLong()).toEpochMilli() < nowMillis) {
+                    eventDao.insert(Event(
+                        timestamp = morningStart.plusSeconds(currentThreshold.toLong()).toString(),
+                        type = EventType.REMINDER_SENT,
+                        sessionId = session1Id,
+                        metadata = mapOf("duration" to currentThreshold.toString())
+                    ))
                 }
-                if (morningEnd < nowMillis) {
-                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = morningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Movement"))
+                if (morningEnd.toEpochMilli() < nowMillis) {
+                    eventDao.insert(Event(
+                        timestamp = morningEnd.toString(),
+                        type = EventType.SEDENTARY_STOPPED,
+                        sessionId = session1Id,
+                        metadata = mapOf("duration" to "5400", "reason" to "Movement")
+                    ))
                 }
             }
 
-            val afternoonStart = morningStart + 18000000 // 14:00
-            val afternoonEnd = afternoonStart + 3600000 // 60m
+            val afternoonStart = morningStart.plusSeconds(18000) // 14:00
+            val afternoonEnd = afternoonStart.plusSeconds(3600) // 60m
+            val session2Id = UUID.randomUUID().toString()
             
-            if (afternoonStart < nowMillis) {
-                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-                if (afternoonStart + (currentThreshold * 1000L) < nowMillis) {
-                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart + (currentThreshold * 1000L), endTimeMillis = afternoonStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT, durationSeconds = currentThreshold))
+            if (afternoonStart.toEpochMilli() < nowMillis) {
+                eventDao.insert(Event(timestamp = afternoonStart.toString(), type = EventType.SEDENTARY_START, sessionId = session2Id, metadata = null))
+                if (afternoonStart.plusSeconds(currentThreshold.toLong()).toEpochMilli() < nowMillis) {
+                    eventDao.insert(Event(
+                        timestamp = afternoonStart.plusSeconds(currentThreshold.toLong()).toString(),
+                        type = EventType.REMINDER_SENT,
+                        sessionId = session2Id,
+                        metadata = mapOf("duration" to currentThreshold.toString())
+                    ))
                 }
-                if (afternoonEnd < nowMillis) {
-                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = afternoonEnd, type = SedentaryEventType.STOPPED, durationSeconds = 3600, metadata = "Movement"))
+                if (afternoonEnd.toEpochMilli() < nowMillis) {
+                    eventDao.insert(Event(
+                        timestamp = afternoonEnd.toString(),
+                        type = EventType.SEDENTARY_STOPPED,
+                        sessionId = session2Id,
+                        metadata = mapOf("duration" to "3600", "reason" to "Movement")
+                    ))
                 }
             }
             
-            val eveningStart = morningStart + 28800000 // 17:00
-            val eveningEnd = eveningStart + 900000 // 15m
+            val eveningStart = morningStart.plusSeconds(28800) // 17:00
+            val eveningEnd = eveningStart.plusSeconds(900) // 15m
+            val session3Id = UUID.randomUUID().toString()
             
-            if (eveningStart < nowMillis) {
-                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-                if (eveningEnd < nowMillis) {
-                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = eveningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 900, metadata = "Movement"))
+            if (eveningStart.toEpochMilli() < nowMillis) {
+                eventDao.insert(Event(timestamp = eveningStart.toString(), type = EventType.SEDENTARY_START, sessionId = session3Id, metadata = null))
+                if (eveningEnd.toEpochMilli() < nowMillis) {
+                    eventDao.insert(Event(
+                        timestamp = eveningEnd.toString(),
+                        type = EventType.SEDENTARY_STOPPED,
+                        sessionId = session3Id,
+                        metadata = mapOf("duration" to "900", "reason" to "Movement")
+                    ))
                 }
             }
         }

@@ -107,7 +107,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         return summaries.value.find { it.dateIso == dateIso }
     }
 
-    fun getEvents(dateIso: String): Flow<List<com.smartr.data.history.SedentaryEvent>> {
+    fun getEvents(dateIso: String): Flow<List<com.smartr.data.history.Event>> {
         return historyRepository.eventsForDay(LocalDate.parse(dateIso))
     }
 }

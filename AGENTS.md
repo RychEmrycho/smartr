@@ -35,8 +35,9 @@ This file contains the project conventions and technical rules for all AI coding
 - **Duration Formatting**: Always use `DurationFormatter` for sedentary time and records to ensure concise, human-readable units (e.g., `12d`, `2h`, `3m 2s`).
 - **Persistence**: 
     - **Room**: For structured daily/history data. Use **Enums** with `@TypeConverter` instead of magic strings for state and event types.
+    - **Events**: Always use the generic `events` table with **RFC3339** string timestamps and **JSON metadata** for granular logs.
     - **DataStore**: For lightweight user preferences.
-    - **TrackingStateRepository**: MUST be used to persist critical runtime states (sedentary start time, step counts, off-body status) to survive process death and watch restarts.
+    - **TrackingStateRepository**: MUST be used to persist critical runtime states (sedentary start time, step counts, off-body status, and active `sessionId`) to survive process death and watch restarts.
 - **State Integrity**: 
     - **Reconciliation**: State-based tracking MUST include a reconciliation mechanism (e.g., `reconcileInterruptedEvents`) to handle device restarts, crashes, or battery death.
     - **Mock Data**: Any change to the database schema or event logic MUST be accompanied by an update to the `injectMockScenario` function to ensure testing data remains valid and realistic.
