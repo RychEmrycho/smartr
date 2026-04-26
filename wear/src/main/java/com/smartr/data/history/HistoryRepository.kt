@@ -96,9 +96,27 @@ class HistoryRepository(private val context: Context) {
             }
             
             val hourly = MutableList(24) { 0 }
-            // Simulate peak at 2 PM (14:00)
-            hourly[14] = (sittingSec / 6).coerceAtMost(3600)
-            hourly[15] = (sittingSec / 6).coerceAtMost(3600)
+            // Distribute sitting seconds across the day with a hotspot at 14:00
+            val weights = DoubleArray(24) { hour ->
+                when (hour) {
+                    14 -> 10.0 // Hotspot
+                    in 9..18 -> 4.0 // Office hours
+                    in 19..22 -> 2.0 // Evening
+                    else -> 0.1 // Night/Early morning
+                }
+            }
+            val totalWeight = weights.sum()
+            var distributedSec = 0
+            for (hour in 0..23) {
+                val share = ((weights[hour] / totalWeight) * sittingSec).toInt().coerceAtMost(3600)
+                hourly[hour] = share
+                distributedSec += share
+            }
+            
+            // Adjust any rounding discrepancy to the hotspot
+            if (sittingSec > distributedSec) {
+                hourly[14] = (hourly[14] + (sittingSec - distributedSec)).coerceAtMost(3600)
+            }
             
             summaries.add(DailySummary(
                 dateIso = dateIso,

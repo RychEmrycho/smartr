@@ -25,6 +25,8 @@
     <string name="dashboard_view_history">View History</string>
     <string name="dashboard_settings">Settings</string>
     <string name="dashboard_help_guide">Help &amp; Guide</string>
+    <string name="dashboard_phone_connected">Connected</string>
+    <string name="dashboard_phone_disconnected">Disconnected</string>
     <string name="dashboard_wellness_positive">You\'re doing great! Keep moving.</string>
     <string name="dashboard_streak_format">🔥 %d day streak</string>
     <string name="dashboard_avg_sedentary_format">Avg Sedentary: %s</string>

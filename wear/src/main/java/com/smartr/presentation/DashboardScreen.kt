@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -123,18 +124,10 @@ fun DashboardScreen(
                             modifier = Modifier.size(16.dp)
                         )
                     },
-                    title = { Text(stringResource(R.string.dashboard_7day_trend)) },
+                    title = { },
                     time = { Text("Last 7d") },
                 ) {
                     Column {
-                        Text(
-                            stringResource(
-                                R.string.dashboard_avg_sedentary_format,
-                                DurationFormatter.format(context, insights.averageSedentarySeconds)
-                            ),
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
                         if (trendData.size > 1) {
                             Sparkline(
                                 data = trendData,
@@ -151,6 +144,14 @@ fun DashboardScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            stringResource(
+                                R.string.dashboard_avg_sedentary_format,
+                                DurationFormatter.format(context, insights.averageSedentarySeconds)
+                            ),
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 }
             }
@@ -172,6 +173,33 @@ fun DashboardScreen(
                     colors = ButtonDefaults.filledTonalButtonColors()
                 ) {
                     Text(stringResource(R.string.dashboard_settings))
+                }
+            }
+
+            item(key = "phone_status") {
+                val isPhoneConnected by viewModel.isPhoneConnected.collectAsState()
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Smartphone,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (isPhoneConnected) WellnessHigh else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (isPhoneConnected) 
+                            stringResource(R.string.dashboard_phone_connected) 
+                            else stringResource(R.string.dashboard_phone_disconnected),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isPhoneConnected) WellnessHigh else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
                 }
             }
         }

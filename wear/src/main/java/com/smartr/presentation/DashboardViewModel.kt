@@ -14,11 +14,16 @@ import com.smartr.logic.BehaviorInsightsEngine
 import com.smartr.logic.InsightSnapshot
 import com.smartr.logic.PassiveRuntimeStore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.Node
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
@@ -45,6 +50,29 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     val trendData: StateFlow<List<Int>> = summaries
         .map { list -> list.takeLast(7).map { it.sedentarySeconds } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _isPhoneConnected = MutableStateFlow(false)
+    val isPhoneConnected = _isPhoneConnected.asStateFlow()
+
+    init {
+        monitorPhoneConnection()
+    }
+
+    private fun monitorPhoneConnection() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val nodeClient = Wearable.getNodeClient(getApplication())
+            while (isActive) {
+                try {
+                    val nodes = nodeClient.connectedNodes.await()
+                    val isConnected = nodes.any { it.isNearby }
+                    _isPhoneConnected.value = isConnected
+                } catch (e: Exception) {
+                    _isPhoneConnected.value = false
+                }
+                delay(10000) // Check every 10 seconds
+            }
+        }
+    }
 
     fun markAsDone() {
         viewModelScope.launch {
