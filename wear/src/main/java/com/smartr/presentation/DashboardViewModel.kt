@@ -7,6 +7,7 @@ import com.smartr.complication.ComplicationUpdater
 import com.smartr.data.AppSettings
 import com.smartr.data.SettingsRepository
 import com.smartr.data.TrackingStateRepository
+import com.smartr.data.history.PersonalBest
 import com.smartr.data.history.DailySummary
 import com.smartr.data.history.HistoryRepository
 import com.smartr.logic.BehaviorInsightsEngine
@@ -36,7 +37,10 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     val insights: StateFlow<InsightSnapshot> = summaries
         .map { insightsEngine.build(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightSnapshot(0, 0, 100, 100, 0, 1, 0f, "Novice", 0))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InsightSnapshot(0, 0, 100, 100, 0, 1, 0f, "Novice", 0, null, null, "B"))
+
+    val personalBests: StateFlow<List<PersonalBest>> = historyRepository.personalBests()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val trendData: StateFlow<List<Int>> = summaries
         .map { list -> list.takeLast(7).map { it.sedentaryMinutes } }

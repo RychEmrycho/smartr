@@ -30,6 +30,10 @@
     <string name="dashboard_avg_sedentary_format">Avg Sedentary: %dm</string>
     <string name="dashboard_collect_data">Collect more data for chart</string>
     <string name="history_title">History</string>
+    <string name="history_danger_zone">Danger Zone: %d:00</string>
+    <string name="history_weekly_better">%d%% better than last week</string>
+    <string name="history_weekly_worse">%d%% more sitting than last week</string>
+    <string name="history_performance_grade">Grade: %s</string>
     <string name="history_empty">No history yet</string>
     <string name="history_footer">Full history available on your phone.</string>
     <string name="history_item_sitting_format">%dm sitting</string>

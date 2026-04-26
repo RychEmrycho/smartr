@@ -12,13 +12,34 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
 
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
+
 @Entity
 data class DailySummary(
     @PrimaryKey val dateIso: String,
     val sedentaryMinutes: Int,
     val remindersSent: Int,
-    val remindersAcknowledged: Int
+    val remindersAcknowledged: Int,
+    val hourlySedentary: List<Int> = List(24) { 0 }
 )
+
+@Entity
+data class PersonalBest(
+    @PrimaryKey val recordType: String, // e.g., "max_streak", "min_sedentary", "max_response_rate"
+    val value: Int,
+    val dateIso: String
+)
+
+class Converters {
+    @TypeConverter
+    fun fromList(value: List<Int>): String = value.joinToString(",")
+
+    @TypeConverter
+    fun toList(value: String): List<Int> = 
+        if (value.isEmpty()) List(24) { 0 } 
+        else value.split(",").map { it.toInt() }
+}
 
 @Dao
 interface DailySummaryDao {
@@ -41,9 +62,23 @@ interface DailySummaryDao {
     fun latest30Days(): Flow<List<DailySummary>>
 }
 
-@Database(entities = [DailySummary::class], version = 1, exportSchema = false)
+@Dao
+interface PersonalBestDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(pb: PersonalBest)
+
+    @Query("SELECT * FROM PersonalBest")
+    fun getAll(): Flow<List<PersonalBest>>
+
+    @Query("SELECT * FROM PersonalBest WHERE recordType = :type LIMIT 1")
+    suspend fun findByType(type: String): PersonalBest?
+}
+
+@Database(entities = [DailySummary::class, PersonalBest::class], version = 2, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dailySummaryDao(): DailySummaryDao
+    abstract fun personalBestDao(): PersonalBestDao
 
     companion object {
         @Volatile
@@ -55,7 +90,7 @@ abstract class HistoryDatabase : RoomDatabase() {
                     context.applicationContext,
                     HistoryDatabase::class.java,
                     "smartr_history.db"
-                ).build().also { INSTANCE = it }
+                ).fallbackToDestructiveMigration().build().also { INSTANCE = it }
             }
         }
     }

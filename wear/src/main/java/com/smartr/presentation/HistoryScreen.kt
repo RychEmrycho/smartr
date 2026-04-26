@@ -19,11 +19,25 @@ import androidx.wear.compose.material3.*
 import com.smartr.R
 import androidx.compose.ui.res.stringResource
 
+import com.smartr.presentation.component.HourlyHeatmap
+import com.smartr.presentation.component.PersonalBestRow
+import com.smartr.presentation.theme.LevelGold
+import com.smartr.presentation.theme.WellnessHigh
+import com.smartr.presentation.theme.WellnessLow
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.wear.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
+import androidx.wear.compose.material3.CardDefaults
+
 @Composable
 fun HistoryScreen(
     viewModel: DashboardViewModel = viewModel()
 ) {
     val summaries by viewModel.summaries.collectAsState()
+    val insights by viewModel.insights.collectAsState()
+    val personalBests by viewModel.personalBests.collectAsState()
     val listState = rememberScalingLazyListState()
     
     ScreenScaffold(scrollState = listState, timeText = { TimeText() }) {
@@ -35,6 +49,40 @@ fun HistoryScreen(
         ) {
             item(key = "header") { 
                 ListHeader { Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleMedium) } 
+            }
+
+            // Weekly Insight Card
+            item(key = "weekly_insight") {
+                TitleCard(
+                    onClick = { },
+                    title = { Text(stringResource(R.string.history_performance_grade, insights.performanceGrade)) },
+                    subtitle = {
+                        Column {
+                            insights.dangerZoneHour?.let { hour ->
+                                Text(
+                                    stringResource(R.string.history_danger_zone, hour),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = WellnessLow
+                                )
+                            }
+                            insights.weeklyChangePercent?.let { change ->
+                                val color = if (change < 0) WellnessHigh else WellnessLow
+                                val text = if (change < 0) 
+                                    stringResource(R.string.history_weekly_better, Math.abs(change))
+                                    else stringResource(R.string.history_weekly_worse, change)
+                                Text(text, style = MaterialTheme.typography.labelSmall, color = color)
+                            }
+                        }
+                    },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                )
+            }
+
+            // Hall of Fame
+            if (personalBests.isNotEmpty()) {
+                item(key = "pbs") {
+                    PersonalBestRow(records = personalBests, modifier = Modifier.padding(vertical = 8.dp))
+                }
             }
             
             if (summaries.isEmpty()) {
@@ -50,7 +98,16 @@ fun HistoryScreen(
                 TitleCard(
                     onClick = { },
                     title = { Text(summary.dateIso) },
-                    subtitle = { Text(stringResource(R.string.history_item_sitting_format, summary.sedentaryMinutes)) }
+                    subtitle = {
+                        Column {
+                            Text(stringResource(R.string.history_item_sitting_format, summary.sedentaryMinutes))
+                            Spacer(Modifier.height(4.dp))
+                            HourlyHeatmap(
+                                hourlyData = summary.hourlySedentary,
+                                modifier = Modifier.height(20.dp)
+                            )
+                        }
+                    }
                 ) {
                     Text(
                         stringResource(R.string.history_item_reminders_format, summary.remindersSent), 
