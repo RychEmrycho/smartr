@@ -16,6 +16,7 @@ import kotlin.random.Random
 class ReminderScheduler(private val context: Context) {
     companion object {
         private const val CHANNEL_ID = "smartr_reminders"
+        private const val REMINDER_NOTIFICATION_ID = 1001
     }
 
     fun ensureChannel() {
@@ -28,12 +29,13 @@ class ReminderScheduler(private val context: Context) {
         manager.createNotificationChannel(channel)
     }
 
-    fun sendReminder() {
-        val prompts = listOf(
-            "Time to stand up and walk a bit.",
-            "Hydrate: take a glass of water.",
-            "Stretch break: loosen your shoulders."
-        )
+    fun sendReminder(sedentaryDurationSeconds: Int) {
+        val durationFormatted = com.smartr.logic.DurationFormatter.format(context, sedentaryDurationSeconds)
+        val titleText = context.getString(com.smartr.R.string.reminder_notification_title_format, durationFormatted)
+
+        val prompts = context.resources.getStringArray(com.smartr.R.array.reminder_prompts)
+        val prompt = prompts.random(Random(System.currentTimeMillis()))
+
         val ackIntent = Intent(context, ReminderActionReceiver::class.java).apply {
             action = ReminderActionReceiver.ACTION_ACKNOWLEDGE
         }
@@ -46,8 +48,8 @@ class ReminderScheduler(private val context: Context) {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Smartr reminder")
-            .setContentText(prompts.random(Random(System.currentTimeMillis())))
+            .setContentTitle(titleText)
+            .setContentText(prompt)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .addAction(0, "Done", ackPendingIntent)
             .setAutoCancel(true)
@@ -62,6 +64,6 @@ class ReminderScheduler(private val context: Context) {
                 return
             }
         }
-        NotificationManagerCompat.from(context).notify(Random.nextInt(), notification)
+        NotificationManagerCompat.from(context).notify(REMINDER_NOTIFICATION_ID, notification)
     }
 }

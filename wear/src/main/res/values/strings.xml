@@ -72,6 +72,14 @@
     <string name="settings_mock_better">Scenario: Better</string>
     <string name="settings_mock_worse">Scenario: Worse</string>
     <string name="settings_mock_consistent">Scenario: Consistent</string>
+
+    <string-array name="reminder_prompts">
+        <item>Time to stand up and walk a bit.</item>
+        <item>Hydrate: take a glass of water.</item>
+        <item>Stretch break: loosen your shoulders.</item>
+    </string-array>
+    <string name="reminder_notification_title_format">%s sedentary</string>
+
     <string name="duration_seconds">%ds</string>
     <string name="duration_minutes_only">%dm</string>
     <string name="duration_minutes_seconds">%1$dm %2$ds</string>

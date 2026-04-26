@@ -157,7 +157,7 @@ class PassiveDataService : PassiveListenerService() {
         if (decision.shouldRemind) {
             val scheduler = ReminderScheduler(applicationContext)
             scheduler.ensureChannel()
-            scheduler.sendReminder()
+            scheduler.sendReminder(decision.sedentaryDurationSeconds)
             historyRepository.recordReminderSent(
                 date = LocalDate.now(ZoneId.systemDefault()),
                 durationSeconds = decision.sedentaryDurationSeconds
