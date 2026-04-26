@@ -159,7 +159,8 @@ class PassiveDataService : PassiveListenerService() {
             scheduler.ensureChannel()
             scheduler.sendReminder()
             historyRepository.recordReminderSent(
-                LocalDate.now(ZoneId.systemDefault())
+                date = LocalDate.now(ZoneId.systemDefault()),
+                durationSeconds = decision.sedentaryDurationSeconds
             )
         }
     }

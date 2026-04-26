@@ -154,14 +154,12 @@ private fun EventTimelineItem(
         }
         SedentaryEventType.STOPPED -> {
             val isBreach = event.durationSeconds > thresholdSeconds
-            val isGoalMet = event.metadata?.contains("Goal met", ignoreCase = true) == true
-            val c = if (isGoalMet) WellnessHigh else if (isBreach) WellnessLow else WellnessHigh
-            val ic = if (isGoalMet) Icons.Default.CheckCircle else Icons.AutoMirrored.Filled.DirectionsRun
+            val color = if (isBreach) WellnessLow else WellnessHigh
             
             Quad(
-                ic, 
-                c, 
-                if (isGoalMet) "Goal met" else "Sedentary stopped", 
+                Icons.AutoMirrored.Filled.DirectionsRun, 
+                color, 
+                "Sedentary stopped",
                 "${DurationFormatter.format(context, event.durationSeconds)} (${event.metadata ?: "Movement"})"
             )
         }
@@ -177,7 +175,7 @@ private fun EventTimelineItem(
             Icons.Default.Notifications, 
             MaterialTheme.colorScheme.primary, 
             "Reminder sent", 
-            "Threshold reached"
+            "${DurationFormatter.format(context, event.durationSeconds)} sedentary"
         )
     }
 

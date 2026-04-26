@@ -28,7 +28,7 @@ class HistoryRepository(private val context: Context) {
         syncManager.syncHistory(latest)
     }
 
-    suspend fun recordReminderSent(date: LocalDate) {
+    suspend fun recordReminderSent(date: LocalDate, durationSeconds: Int) {
         val key = date.toString()
         ensureDayExists(key)
         dao.incrementSent(key)
@@ -38,7 +38,8 @@ class HistoryRepository(private val context: Context) {
             dateIso = key,
             startTimeMillis = System.currentTimeMillis(),
             endTimeMillis = System.currentTimeMillis(),
-            type = SedentaryEventType.REMINDER_SENT
+            type = SedentaryEventType.REMINDER_SENT,
+            durationSeconds = durationSeconds
         ))
         
         syncAll()
@@ -49,8 +50,8 @@ class HistoryRepository(private val context: Context) {
         ensureDayExists(key)
         dao.incrementAcknowledged(key)
         
-        // Mark the active sedentary event as met
-        closeActiveSedentaryEvent("Goal met (Manual)")
+        // Mark the active sedentary event as stopped
+        closeActiveSedentaryEvent("Manual reset")
         
         syncAll()
     }
@@ -222,10 +223,10 @@ class HistoryRepository(private val context: Context) {
             if (morningStart < nowMillis) {
                 eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
                 if (morningStart + (currentThreshold * 1000L) < nowMillis) {
-                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart + (currentThreshold * 1000L), endTimeMillis = morningStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
+                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart + (currentThreshold * 1000L), endTimeMillis = morningStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT, durationSeconds = currentThreshold))
                 }
                 if (morningEnd < nowMillis) {
-                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = morningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Goal met (Movement)"))
+                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = morningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Movement"))
                 }
             }
 
@@ -235,7 +236,7 @@ class HistoryRepository(private val context: Context) {
             if (afternoonStart < nowMillis) {
                 eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
                 if (afternoonStart + (currentThreshold * 1000L) < nowMillis) {
-                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart + (currentThreshold * 1000L), endTimeMillis = afternoonStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
+                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart + (currentThreshold * 1000L), endTimeMillis = afternoonStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT, durationSeconds = currentThreshold))
                 }
                 if (afternoonEnd < nowMillis) {
                     eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = afternoonEnd, type = SedentaryEventType.STOPPED, durationSeconds = 3600, metadata = "Movement"))

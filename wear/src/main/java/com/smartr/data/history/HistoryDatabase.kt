@@ -106,8 +106,8 @@ interface SedentaryEventDao {
     @Query("SELECT * FROM SedentaryEvent WHERE dateIso = :dateIso ORDER BY startTimeMillis ASC")
     fun eventsForDay(dateIso: String): Flow<List<SedentaryEvent>>
 
-    @Query("SELECT * FROM SedentaryEvent WHERE endTimeMillis IS NULL AND type = 'START' ORDER BY startTimeMillis DESC LIMIT 1")
-    suspend fun getActiveEvent(): SedentaryEvent?
+    @Query("SELECT * FROM SedentaryEvent WHERE endTimeMillis IS NULL AND type = :type ORDER BY startTimeMillis DESC LIMIT 1")
+    suspend fun getActiveEvent(type: SedentaryEventType = SedentaryEventType.START): SedentaryEvent?
 
     @Update
     suspend fun update(event: SedentaryEvent)

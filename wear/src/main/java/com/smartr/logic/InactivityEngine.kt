@@ -17,7 +17,8 @@ data class InactivityState(
 data class InactivityDecision(
     val shouldRemind: Boolean,
     val reason: String,
-    val isMovementReset: Boolean = false
+    val isMovementReset: Boolean = false,
+    val sedentaryDurationSeconds: Int = 0
 )
 
 class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
@@ -158,20 +159,21 @@ class InactivityEngine(private val zoneId: ZoneId = ZoneId.systemDefault()) {
         val updatedState = state.sedentaryStart?.let { state } ?: state.copy(sedentaryStart = now)
         val sedentaryStart = updatedState.sedentaryStart ?: now
         val sedentaryDuration = Duration.between(sedentaryStart, now)
+        val sedentaryDurationSeconds = sedentaryDuration.toSeconds().toInt()
         val sitThreshold = settings.sitThresholdUnit.toDuration(settings.sitThresholdValue)
 
         if (sedentaryDuration < sitThreshold) {
             Log.v(TAG, "Below sedentary threshold: ${sedentaryDuration.toSeconds()}s / ${sitThreshold.toSeconds()}s")
-            return updatedState to InactivityDecision(false, "below_threshold")
+            return updatedState to InactivityDecision(false, "below_threshold", sedentaryDurationSeconds = sedentaryDurationSeconds)
         }
 
         val repeatThreshold = settings.reminderRepeatUnit.toDuration(settings.reminderRepeatValue)
         val canRepeat = updatedState.lastReminderAt?.let { Duration.between(it, now) >= repeatThreshold } ?: true
 
         val result = if (canRepeat) {
-            updatedState.copy(lastReminderAt = now) to InactivityDecision(true, "threshold_reached")
+            updatedState.copy(lastReminderAt = now) to InactivityDecision(true, "threshold_reached", sedentaryDurationSeconds = sedentaryDurationSeconds)
         } else {
-            updatedState to InactivityDecision(false, "repeat_window")
+            updatedState to InactivityDecision(false, "repeat_window", sedentaryDurationSeconds = sedentaryDurationSeconds)
         }
         Log.d(TAG, "Evaluate sedentary: ${result.second.reason} (duration: ${sedentaryDuration.toSeconds()}s)")
         return result
