@@ -16,6 +16,8 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material3.*
+import androidx.navigation.NavHostController
+import com.smartr.Screen
 
 import com.smartr.R
 import androidx.compose.ui.res.stringResource
@@ -38,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun HistoryScreen(
+    navController: NavHostController,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val summaries by viewModel.summaries.collectAsState()
@@ -111,7 +114,9 @@ fun HistoryScreen(
                     else ((summary.remindersAcknowledged * 100.0) / summary.remindersSent).toInt()
 
                 TitleCard(
-                    onClick = { },
+                    onClick = { 
+                        navController.navigate(Screen.DailyDetail.createRoute(summary.dateIso))
+                    },
                     title = { Text(date) },
                     subtitle = {
                         val context = LocalContext.current

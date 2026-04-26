@@ -28,6 +28,7 @@ import com.smartr.presentation.DashboardScreen
 import com.smartr.presentation.HistoryScreen
 import com.smartr.presentation.SettingsScreen
 import com.smartr.presentation.VitalityInfoScreen
+import com.smartr.presentation.DailyDetailScreen
 import com.smartr.presentation.theme.SmartRTheme
 import com.smartr.service.OffBodyService
 import com.smartr.worker.PassiveRegistrationWorker
@@ -38,6 +39,9 @@ sealed class Screen(val route: String) {
     object History : Screen("history")
     object Settings : Screen("settings")
     object VitalityInfo : Screen("vitality_info")
+    object DailyDetail : Screen("daily_detail/{dateIso}") {
+        fun createRoute(dateIso: String) = "daily_detail/$dateIso"
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -107,13 +111,17 @@ class MainActivity : ComponentActivity() {
                             DashboardScreen(navController)
                         }
                         composable(Screen.History.route) {
-                            HistoryScreen()
+                            HistoryScreen(navController)
                         }
                         composable(Screen.Settings.route) {
                             SettingsScreen()
                         }
                         composable(Screen.VitalityInfo.route) {
                             VitalityInfoScreen()
+                        }
+                        composable(Screen.DailyDetail.route) { backStackEntry ->
+                            val dateIso = backStackEntry.arguments?.getString("dateIso") ?: ""
+                            DailyDetailScreen(dateIso, navController)
                         }
                     }
                 }

@@ -100,4 +100,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
     }
+
+    fun getSummary(dateIso: String): DailySummary? {
+        return summaries.value.find { it.dateIso == dateIso }
+    }
 }
