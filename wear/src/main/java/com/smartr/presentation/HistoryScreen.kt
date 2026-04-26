@@ -28,7 +28,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.wear.compose.material3.Text
-import androidx.compose.ui.text.font.FontWeight
+import java.time.format.DateTimeFormatter
+import java.time.LocalDate
+import java.util.Locale
 import androidx.wear.compose.material3.CardDefaults
 import com.smartr.logic.DurationFormatter
 import androidx.compose.ui.platform.LocalContext
@@ -97,15 +99,25 @@ fun HistoryScreen(
                 items = summaries.reversed().take(10),
                 key = { it.dateIso }
             ) { summary ->
+                val date = try {
+                    val parsed = LocalDate.parse(summary.dateIso)
+                    parsed.format(DateTimeFormatter.ofPattern("EEE, dd MMM yyyy", Locale.getDefault()))
+                } catch (e: Exception) {
+                    summary.dateIso
+                }
+
+                val complianceRate = if (summary.remindersSent == 0) 100 
+                    else ((summary.remindersAcknowledged * 100.0) / summary.remindersSent).toInt()
+
                 TitleCard(
                     onClick = { },
-                    title = { Text(summary.dateIso) },
+                    title = { Text(date) },
                     subtitle = {
                         val context = LocalContext.current
                         Column {
                             Text(
                                 stringResource(
-                                    R.string.history_item_sitting_format, 
+                                    R.string.history_item_sedentary_format, 
                                     DurationFormatter.format(context, summary.sedentarySeconds)
                                 )
                             )
@@ -118,7 +130,11 @@ fun HistoryScreen(
                     }
                 ) {
                     Text(
-                        stringResource(R.string.history_item_reminders_format, summary.remindersSent), 
+                        stringResource(
+                            R.string.history_item_compliance_format, 
+                            summary.remindersSent,
+                            complianceRate
+                        ),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }

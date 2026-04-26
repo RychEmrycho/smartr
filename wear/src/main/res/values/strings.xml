@@ -37,9 +37,9 @@
     <string name="history_weekly_worse">%d%% more sitting than last week</string>
     <string name="history_performance_grade">Grade: %s</string>
     <string name="history_empty">No history yet</string>
-    <string name="history_footer">Full history available on your phone.</string>
-    <string name="history_item_sitting_format">Sitting: %s</string>
-    <string name="history_item_reminders_format">%d reminders</string>
+    <string name="history_footer">Last 10 days shown. Full history on phone.</string>
+    <string name="history_item_sedentary_format">Sedentary: %s</string>
+    <string name="history_item_compliance_format">%1$d reminders (%2$d%%)</string>
     <string name="settings_title">Settings</string>
     <string name="settings_sit_limit">Sit Limit</string>
     <string name="settings_reminder_every">Reminder Every</string>
