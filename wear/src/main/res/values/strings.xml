@@ -40,6 +40,14 @@
     <string name="history_footer">Last 10 days shown. Full history on phone.</string>
     <string name="history_item_sedentary_format">Sedentary: %s</string>
     <string name="history_item_compliance_format">%1$d reminders (%2$d%% met)</string>
+    <string name="detail_morning">Morning</string>
+    <string name="detail_afternoon">Afternoon</string>
+    <string name="detail_evening">Evening</string>
+    <string name="detail_legend_high_dynamic">\&gt;%s sedentary</string>
+    <string name="detail_legend_mid_dynamic">\&gt;%s sedentary</string>
+    <string name="detail_legend_low">Active</string>
+    <string name="detail_sedentary_format">%s sedentary</string>
+    <string name="detail_historical_goal">Daily goal: %s sedentary</string>
     <string name="settings_title">Settings</string>
     <string name="settings_sit_limit">Sit Limit</string>
     <string name="settings_reminder_every">Reminder Every</string>

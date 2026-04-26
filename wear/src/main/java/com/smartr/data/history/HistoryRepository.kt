@@ -2,6 +2,7 @@ package com.smartr.data.history
 
 import android.content.Context
 import com.smartr.data.WearSyncManager
+import com.smartr.data.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
@@ -13,6 +14,7 @@ class HistoryRepository(private val context: Context) {
     private val dao = database.dailySummaryDao()
     private val pbDao = database.personalBestDao()
     private val syncManager = WearSyncManager(context)
+    private val settingsRepository = SettingsRepository(context)
 
     fun summaries(): Flow<List<DailySummary>> = dao.latest30Days()
 
@@ -73,13 +75,17 @@ class HistoryRepository(private val context: Context) {
 
     private suspend fun ensureDayExists(dateIso: String) {
         if (dao.findByDate(dateIso) == null) {
-            dao.upsert(DailySummary(dateIso, 0, 0, 0, List(24) { 0 }))
+            val settings = settingsRepository.currentSettings()
+            val threshold = settings.sitThresholdUnit.toDuration(settings.sitThresholdValue).seconds.toInt()
+            dao.upsert(DailySummary(dateIso, 0, 0, 0, List(24) { 0 }, threshold))
         }
     }
 
     suspend fun injectMockScenario(scenario: String) {
         val today = LocalDate.now()
         val summaries = mutableListOf<DailySummary>()
+        val settings = settingsRepository.currentSettings()
+        val currentThreshold = settings.sitThresholdUnit.toDuration(settings.sitThresholdValue).seconds.toInt()
         
         // Generate 14 days of data
         for (i in 0..14) {
@@ -133,7 +139,8 @@ class HistoryRepository(private val context: Context) {
                 sedentarySeconds = sittingSec,
                 remindersSent = 10,
                 remindersAcknowledged = if (scenario == "BETTER") 9 else 4,
-                hourlySedentarySeconds = hourly
+                hourlySedentarySeconds = hourly,
+                sedentaryThresholdSeconds = currentThreshold
             ))
         }
         

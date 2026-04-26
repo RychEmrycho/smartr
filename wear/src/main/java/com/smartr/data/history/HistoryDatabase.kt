@@ -21,7 +21,8 @@ data class DailySummary(
     val sedentarySeconds: Int,
     val remindersSent: Int,
     val remindersAcknowledged: Int,
-    val hourlySedentarySeconds: List<Int> = List(24) { 0 }
+    val hourlySedentarySeconds: List<Int> = List(24) { 0 },
+    val sedentaryThresholdSeconds: Int = 2700 // Default to 45 minutes
 )
 
 @Entity
@@ -74,7 +75,7 @@ interface PersonalBestDao {
     suspend fun findByType(type: String): PersonalBest?
 }
 
-@Database(entities = [DailySummary::class, PersonalBest::class], version = 3, exportSchema = false)
+@Database(entities = [DailySummary::class, PersonalBest::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dailySummaryDao(): DailySummaryDao
