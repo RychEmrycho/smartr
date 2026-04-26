@@ -210,27 +210,47 @@ class HistoryRepository(private val context: Context) {
         
         // Mock Sedentary Events for the last 14 days
         eventDao.clearAll()
+        val nowMillis = System.currentTimeMillis()
+        
         for (i in 0..14) {
             val date = today.minusDays(i.toLong())
             val dateIso = date.toString()
             
-            val nowBase = date.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val morningStart = date.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val morningEnd = morningStart + 5400000 // 90m
             
-            // Morning Session (9:00 - 10:30) - 90m sedentary (BREACH)
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase + (currentThreshold * 1000L), endTimeMillis = nowBase + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase + 5400000, endTimeMillis = nowBase + 5400000, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Goal met (Movement)"))
+            if (morningStart < nowMillis) {
+                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
+                if (morningStart + (currentThreshold * 1000L) < nowMillis) {
+                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = morningStart + (currentThreshold * 1000L), endTimeMillis = morningStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
+                }
+                if (morningEnd < nowMillis) {
+                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = morningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Goal met (Movement)"))
+                }
+            }
 
-            // Afternoon Slump (14:00 - 15:00) - 60m sedentary (BREACH, IGNORED)
-            val afternoonBase = nowBase + 18000000 // +5 hours
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase + (currentThreshold * 1000L), endTimeMillis = afternoonBase + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase + 3600000, endTimeMillis = afternoonBase + 3600000, type = SedentaryEventType.STOPPED, durationSeconds = 3600, metadata = "Movement"))
+            val afternoonStart = morningStart + 18000000 // 14:00
+            val afternoonEnd = afternoonStart + 3600000 // 60m
             
-            // Short evening sitting (17:00 - 17:15) - 15m (SAFE)
-            val eveningBase = nowBase + 28800000 // +8 hours
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningBase + 900000, endTimeMillis = eveningBase + 900000, type = SedentaryEventType.STOPPED, durationSeconds = 900, metadata = "Movement"))
+            if (afternoonStart < nowMillis) {
+                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
+                if (afternoonStart + (currentThreshold * 1000L) < nowMillis) {
+                    eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonStart + (currentThreshold * 1000L), endTimeMillis = afternoonStart + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
+                }
+                if (afternoonEnd < nowMillis) {
+                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = afternoonEnd, type = SedentaryEventType.STOPPED, durationSeconds = 3600, metadata = "Movement"))
+                }
+            }
+            
+            val eveningStart = morningStart + 28800000 // 17:00
+            val eveningEnd = eveningStart + 900000 // 15m
+            
+            if (eveningStart < nowMillis) {
+                eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningStart, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
+                if (eveningEnd < nowMillis) {
+                    eventDao.update(eventDao.getActiveEvent()!!.copy(endTimeMillis = eveningEnd, type = SedentaryEventType.STOPPED, durationSeconds = 900, metadata = "Movement"))
+                }
+            }
         }
 
         // Mock Personal Bests
