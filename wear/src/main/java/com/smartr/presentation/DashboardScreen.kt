@@ -17,6 +17,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.smartr.logic.DurationFormatter
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
@@ -127,7 +128,10 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            stringResource(R.string.dashboard_avg_sedentary_format, insights.averageSedentaryMinutes),
+                            stringResource(
+                                R.string.dashboard_avg_sedentary_format,
+                                DurationFormatter.format(context, insights.averageSedentarySeconds)
+                            ),
                             style = MaterialTheme.typography.labelSmall
                         )
                         Spacer(modifier = Modifier.size(8.dp))

@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.height
 import androidx.wear.compose.material3.Text
 import androidx.compose.ui.text.font.FontWeight
 import androidx.wear.compose.material3.CardDefaults
+import com.smartr.logic.DurationFormatter
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun HistoryScreen(
@@ -99,11 +101,17 @@ fun HistoryScreen(
                     onClick = { },
                     title = { Text(summary.dateIso) },
                     subtitle = {
+                        val context = LocalContext.current
                         Column {
-                            Text(stringResource(R.string.history_item_sitting_format, summary.sedentaryMinutes))
+                            Text(
+                                stringResource(
+                                    R.string.history_item_sitting_format, 
+                                    DurationFormatter.format(context, summary.sedentarySeconds)
+                                )
+                            )
                             Spacer(Modifier.height(4.dp))
                             HourlyHeatmap(
-                                hourlyData = summary.hourlySedentary,
+                                hourlyData = summary.hourlySedentarySeconds,
                                 modifier = Modifier.height(20.dp)
                             )
                         }

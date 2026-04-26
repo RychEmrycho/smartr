@@ -315,6 +315,32 @@ fun SettingsScreen(
                     )
                 }
 
+                item { ListHeader { Text(stringResource(R.string.settings_debug_title)) } }
+
+                item {
+                    Button(
+                        onClick = { viewModel.injectMockData("BETTER") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.filledTonalButtonColors()
+                    ) { Text(stringResource(R.string.settings_mock_better)) }
+                }
+
+                item {
+                    Button(
+                        onClick = { viewModel.injectMockData("WORSE") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors()
+                    ) { Text(stringResource(R.string.settings_mock_worse)) }
+                }
+
+                item {
+                    Button(
+                        onClick = { viewModel.injectMockData("CONSISTENT") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors()
+                    ) { Text(stringResource(R.string.settings_mock_consistent)) }
+                }
+
                 item {
                     val haptic = LocalHapticFeedback.current
                     

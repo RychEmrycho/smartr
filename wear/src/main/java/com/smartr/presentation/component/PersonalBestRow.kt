@@ -10,6 +10,9 @@ import androidx.wear.compose.material3.*
 import com.smartr.data.history.PersonalBest
 import com.smartr.presentation.theme.LevelGold
 
+import androidx.compose.ui.platform.LocalContext
+import com.smartr.logic.DurationFormatter
+
 @Composable
 fun PersonalBestRow(
     records: List<PersonalBest>,
@@ -46,7 +49,8 @@ private fun RecordItem(record: PersonalBest, modifier: Modifier = Modifier) {
     
     val valueStr = when (record.recordType) {
         "max_response_rate" -> "${record.value}%"
-        "min_sedentary" -> "${record.value}m"
+        "min_sedentary" -> DurationFormatter.format(LocalContext.current, record.value)
+        "max_streak" -> "${record.value}d"
         else -> "${record.value}"
     }
 

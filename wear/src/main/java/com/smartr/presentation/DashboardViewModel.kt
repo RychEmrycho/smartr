@@ -43,7 +43,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val trendData: StateFlow<List<Int>> = summaries
-        .map { list -> list.takeLast(7).map { it.sedentaryMinutes } }
+        .map { list -> list.takeLast(7).map { it.sedentarySeconds } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun markAsDone() {

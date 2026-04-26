@@ -17,8 +17,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 
+import com.smartr.data.history.HistoryRepository
+
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SettingsRepository(application)
+    private val historyRepository = HistoryRepository(application)
 
     val settings: StateFlow<AppSettings> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsRepository.DEFAULTS)
@@ -48,6 +51,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun updateQuietEndHour(hour: Int) {
         viewModelScope.launch { repository.updateQuietEndHour(hour) }
+    }
+
+    fun injectMockData(scenario: String) {
+        viewModelScope.launch {
+            historyRepository.injectMockScenario(scenario)
+        }
     }
 
     fun triggerManualSync() {

@@ -18,10 +18,10 @@ import androidx.room.TypeConverters
 @Entity
 data class DailySummary(
     @PrimaryKey val dateIso: String,
-    val sedentaryMinutes: Int,
+    val sedentarySeconds: Int,
     val remindersSent: Int,
     val remindersAcknowledged: Int,
-    val hourlySedentary: List<Int> = List(24) { 0 }
+    val hourlySedentarySeconds: List<Int> = List(24) { 0 }
 )
 
 @Entity
@@ -55,8 +55,8 @@ interface DailySummaryDao {
     @Query("UPDATE DailySummary SET remindersAcknowledged = remindersAcknowledged + 1 WHERE dateIso = :dateIso")
     suspend fun incrementAcknowledged(dateIso: String)
 
-    @Query("UPDATE DailySummary SET sedentaryMinutes = sedentaryMinutes + :minutes WHERE dateIso = :dateIso")
-    suspend fun addMinutes(dateIso: String, minutes: Int)
+    @Query("UPDATE DailySummary SET sedentarySeconds = sedentarySeconds + :seconds WHERE dateIso = :dateIso")
+    suspend fun addSeconds(dateIso: String, seconds: Int)
 
     @Query("SELECT * FROM DailySummary ORDER BY dateIso DESC LIMIT 30")
     fun latest30Days(): Flow<List<DailySummary>>
@@ -74,7 +74,7 @@ interface PersonalBestDao {
     suspend fun findByType(type: String): PersonalBest?
 }
 
-@Database(entities = [DailySummary::class, PersonalBest::class], version = 2, exportSchema = false)
+@Database(entities = [DailySummary::class, PersonalBest::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dailySummaryDao(): DailySummaryDao

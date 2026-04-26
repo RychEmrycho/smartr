@@ -35,7 +35,7 @@ class WearSyncManager(context: Context) {
                 val dataMaps = summaries.map { summary ->
                     com.google.android.gms.wearable.DataMap().apply {
                         putString("date", summary.dateIso)
-                        putInt("sedentary", summary.sedentaryMinutes)
+                        putInt("sedentary", summary.sedentarySeconds)
                         putInt("sent", summary.remindersSent)
                         putInt("ack", summary.remindersAcknowledged)
                     }

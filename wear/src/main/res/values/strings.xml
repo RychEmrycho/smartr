@@ -27,7 +27,7 @@
     <string name="dashboard_help_guide">Help &amp; Guide</string>
     <string name="dashboard_wellness_positive">You\'re doing great! Keep moving.</string>
     <string name="dashboard_streak_format">🔥 %d day streak</string>
-    <string name="dashboard_avg_sedentary_format">Avg Sedentary: %dm</string>
+    <string name="dashboard_avg_sedentary_format">Avg Sedentary: %s</string>
     <string name="dashboard_collect_data">Collect more data for chart</string>
     <string name="history_title">History</string>
     <string name="history_danger_zone">Danger Zone: %d:00</string>
@@ -36,7 +36,7 @@
     <string name="history_performance_grade">Grade: %s</string>
     <string name="history_empty">No history yet</string>
     <string name="history_footer">Full history available on your phone.</string>
-    <string name="history_item_sitting_format">%dm sitting</string>
+    <string name="history_item_sitting_format">Sitting: %s</string>
     <string name="history_item_reminders_format">%d reminders</string>
     <string name="settings_title">Settings</string>
     <string name="settings_sit_limit">Sit Limit</string>
@@ -58,4 +58,15 @@
     <string name="off_body_service_channel_description">Ensures accurate tracking by detecting when the watch is off-wrist.</string>
     <string name="off_body_service_notification_title">Smartr Active</string>
     <string name="off_body_service_notification_text">Monitoring wrist status</string>
+    <string name="settings_debug_title">Debug / Testing</string>
+    <string name="settings_mock_better">Scenario: Better</string>
+    <string name="settings_mock_worse">Scenario: Worse</string>
+    <string name="settings_mock_consistent">Scenario: Consistent</string>
+    <string name="duration_seconds">%ds</string>
+    <string name="duration_minutes_only">%dm</string>
+    <string name="duration_minutes_seconds">%1$dm %2$ds</string>
+    <string name="duration_hours_only">%dh</string>
+    <string name="duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="duration_days_only">%dd</string>
+    <string name="duration_days_hours_minutes">%1$dd %2$dh %3$dm</string>
 </resources>

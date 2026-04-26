@@ -3,7 +3,7 @@ package com.smartr.logic
 import com.smartr.data.history.DailySummary
 
 data class InsightSnapshot(
-    val averageSedentaryMinutes: Int,
+    val averageSedentarySeconds: Int,
     val totalReminders: Int,
     val reminderResponseRate: Int,
     val wellnessScore: Int,
@@ -22,7 +22,7 @@ class BehaviorInsightsEngine {
         if (summaries.isEmpty()) return InsightSnapshot(0, 0, 100, 100, 0, 1, 0f, "Novice", 0)
         
         val sorted = summaries.sortedByDescending { it.dateIso }
-        val avgSedentary = summaries.map { it.sedentaryMinutes }.average().toInt()
+        val avgSedentary = summaries.map { it.sedentarySeconds }.average().toInt()
         val reminders = summaries.sumOf { it.remindersSent }
         val acknowledged = summaries.sumOf { it.remindersAcknowledged }
         val responseRate = if (reminders == 0) 100 else ((acknowledged * 100.0) / reminders).toInt()
@@ -42,8 +42,8 @@ class BehaviorInsightsEngine {
         val dangerZone = calculateDangerZone(last7Days)
 
         // Weekly Comparison
-        val thisWeekAvg = last7Days.map { it.sedentaryMinutes }.average()
-        val prevWeekAvg = sorted.drop(7).take(7).map { it.sedentaryMinutes }.average()
+        val thisWeekAvg = last7Days.map { it.sedentarySeconds }.average()
+        val prevWeekAvg = sorted.drop(7).take(7).map { it.sedentarySeconds }.average()
         val changePercent = if (prevWeekAvg > 0) {
             (((thisWeekAvg - prevWeekAvg) / prevWeekAvg) * 100).toInt()
         } else null
@@ -57,7 +57,7 @@ class BehaviorInsightsEngine {
         }
 
         return InsightSnapshot(
-            averageSedentaryMinutes = avgSedentary,
+            averageSedentarySeconds = avgSedentary,
             totalReminders = reminders,
             reminderResponseRate = responseRate,
             wellnessScore = score,
@@ -72,8 +72,8 @@ class BehaviorInsightsEngine {
         )
     }
 
-    private fun calculateWellness(avgSedentary: Int, responseRate: Int): Int {
-        val sedentaryPenalty = (avgSedentary / 10.0).coerceAtMost(50.0)
+    private fun calculateWellness(avgSedentarySeconds: Int, responseRate: Int): Int {
+        val sedentaryPenalty = (avgSedentarySeconds / 600.0).coerceAtMost(50.0) // 10 mins = 1 penalty point
         val responseBonus = (responseRate / 2.0).coerceAtMost(50.0)
         return (100 - sedentaryPenalty + responseBonus).toInt().coerceIn(0, 100)
     }
@@ -81,7 +81,7 @@ class BehaviorInsightsEngine {
     private fun calculateStreak(sorted: List<DailySummary>): Int {
         var streak = 0
         for (summary in sorted) {
-            if (summary.sedentaryMinutes < 300) streak++ else break
+            if (summary.sedentarySeconds < 300 * 60) streak++ else break
         }
         return streak
     }
@@ -89,7 +89,7 @@ class BehaviorInsightsEngine {
     private fun calculateTotalXp(summaries: List<DailySummary>): Int {
         val acknowledged = summaries.sumOf { it.remindersAcknowledged }
         val xpFromAcknowledged = acknowledged * 50
-        val xpFromSitting = (summaries.sumOf { it.sedentaryMinutes } / 10) * -1
+        val xpFromSitting = (summaries.sumOf { it.sedentarySeconds } / 600) * -1
         return (xpFromAcknowledged + xpFromSitting).coerceAtLeast(0)
     }
 
@@ -115,11 +115,11 @@ class BehaviorInsightsEngine {
         if (summaries.isEmpty()) return null
         val hourlyTotals = IntArray(24)
         summaries.forEach { summary ->
-            summary.hourlySedentary.forEachIndexed { index, mins ->
-                hourlyTotals[index] += mins
+            summary.hourlySedentarySeconds.forEachIndexed { index, secs ->
+                hourlyTotals[index] += secs
             }
         }
-        val maxMins = hourlyTotals.maxOrNull() ?: 0
-        return if (maxMins > 0) hourlyTotals.indexOf(maxMins) else null
+        val maxSecs = hourlyTotals.maxOrNull() ?: 0
+        return if (maxSecs > 0) hourlyTotals.indexOf(maxSecs) else null
     }
 }

@@ -45,7 +45,7 @@ class PassiveDataService : PassiveListenerService() {
             val now = Instant.now()
             val movementDetected = processSteps(dataPoints, trackingRepo)
 
-            val elapsedMinutes = calculateElapsedMinutes(now)
+            val elapsedSeconds = calculateElapsedSeconds(now)
             PassiveRuntimeStore.lastPassiveCallbackAt = now
 
             val settingsRepo = SettingsRepository(applicationContext)
@@ -74,7 +74,7 @@ class PassiveDataService : PassiveListenerService() {
             PassiveRuntimeStore.inactivityState = updatedState
             Log.d(TAG, "Engine evaluation: ${decision.reason}")
             
-            handleDecision(decision, movementDetected, updatedState, elapsedMinutes)
+            handleDecision(decision, movementDetected, updatedState, elapsedSeconds)
             ComplicationUpdater.updateAll(applicationContext)
         }
     }
@@ -105,10 +105,10 @@ class PassiveDataService : PassiveListenerService() {
         return movementDetected
     }
 
-    private fun calculateElapsedMinutes(now: Instant): Long {
+    private fun calculateElapsedSeconds(now: Instant): Long {
         val previousCallbackAt = PassiveRuntimeStore.lastPassiveCallbackAt
         return previousCallbackAt?.let {
-            Duration.between(it, now).toMinutes()
+            Duration.between(it, now).toSeconds()
         } ?: 0L
     }
 
@@ -136,14 +136,14 @@ class PassiveDataService : PassiveListenerService() {
         decision: InactivityDecision,
         movementDetected: Boolean,
         updatedState: InactivityState,
-        elapsedMinutes: Long
+        elapsedSeconds: Long
     ) {
         val historyRepository = HistoryRepository(applicationContext)
         
-        if (!movementDetected && updatedState.sedentaryStart != null && elapsedMinutes > 0) {
+        if (!movementDetected && updatedState.sedentaryStart != null && elapsedSeconds > 0) {
             historyRepository.addSedentaryMinutesSample(
                 LocalDate.now(ZoneId.systemDefault()),
-                minutes = elapsedMinutes.toInt()
+                seconds = elapsedSeconds.toInt()
             )
         }
 
