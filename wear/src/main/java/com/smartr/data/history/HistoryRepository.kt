@@ -209,30 +209,27 @@ class HistoryRepository(private val context: Context) {
         summaries.forEach { dao.upsert(it) }
         
         // Mock Sedentary Events for the last 14 days
-        eventDao.deleteForDay(today.toString())
+        eventDao.clearAll()
         for (i in 0..14) {
             val date = today.minusDays(i.toLong())
             val dateIso = date.toString()
-            eventDao.deleteForDay(dateIso)
             
             val nowBase = date.atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             
             // Morning Session (9:00 - 10:30) - 90m sedentary (BREACH)
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase, endTimeMillis = nowBase, type = SedentaryEventType.START, durationSeconds = 0))
+            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
             eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase + (currentThreshold * 1000L), endTimeMillis = nowBase + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
             eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = nowBase + 5400000, endTimeMillis = nowBase + 5400000, type = SedentaryEventType.STOPPED, durationSeconds = 5400, metadata = "Goal met (Movement)"))
 
-            // Lunch Break (12:00 - 13:00) - Active (No events)
-
             // Afternoon Slump (14:00 - 15:00) - 60m sedentary (BREACH, IGNORED)
             val afternoonBase = nowBase + 18000000 // +5 hours
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase, endTimeMillis = afternoonBase, type = SedentaryEventType.START, durationSeconds = 0))
+            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
             eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase + (currentThreshold * 1000L), endTimeMillis = afternoonBase + (currentThreshold * 1000L), type = SedentaryEventType.REMINDER_SENT))
             eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = afternoonBase + 3600000, endTimeMillis = afternoonBase + 3600000, type = SedentaryEventType.STOPPED, durationSeconds = 3600, metadata = "Movement"))
             
             // Short evening sitting (17:00 - 17:15) - 15m (SAFE)
             val eveningBase = nowBase + 28800000 // +8 hours
-            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningBase, endTimeMillis = eveningBase, type = SedentaryEventType.START, durationSeconds = 0))
+            eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningBase, endTimeMillis = null, type = SedentaryEventType.START, durationSeconds = 0))
             eventDao.insert(SedentaryEvent(dateIso = dateIso, startTimeMillis = eveningBase + 900000, endTimeMillis = eveningBase + 900000, type = SedentaryEventType.STOPPED, durationSeconds = 900, metadata = "Movement"))
         }
 

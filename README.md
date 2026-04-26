@@ -1,86 +1,38 @@
 # Smartr
 
-Smartr is a simple tool for Wear OS that helps you balance sitting and moving. It monitors your activity in the background and gives you a nudge when it's time to stand up, stretch, or take a walk.
+Smartr is a Wear OS application designed to monitor sedentary behavior and encourage movement through intelligent reminders and a vitality-based XP system.
 
-It is built to handle sedentary habits specifically. The app runs entirely on your watch, using the system's background sensors to detect movement, sleep, and whether you are currently wearing the device.
+## Event Tracking & Reconciliation
 
----
+Smartr uses an event-based log to track your daily behavior. This ensures that every session is recorded accurately, even in high-interruption environments like a smartwatch.
 
-## Features
+### Behavior Lifecycle
 
-### Tracking
-- **Background monitoring**: Uses standard system sensors to track activity with minimal power impact.
-- **Wrist detection**: Pauses reminders when the watch is taken off.
-- **Sleep detection**: Suppresses notifications while the system detects you are asleep.
-
-### On the watch
-- **Vitality System**: A gamified experience with levels, XP, and ranks (Novice to Zen Master).
-- **Dashboard**: A quick look at your level progress via the Vitality Ring, 7-day trends with visual sparklines, and phone connection status.
-- **Help & Guide**: Built-in guide explaining the scoring and leveling mechanics.
-- **Human-Readable History**: Detailed activity history with hourly heatmaps, weekly performance grades, and personal bests.
-- **Watch faces**: Streaks and scores available as complications.
-- **Manual logs**: Option to record a break manually to reset your timers.
-
-### On the phone
-- **Data sync**: Automatically sends your history and settings to your phone.
-- **History**: Store and view your progress over weeks and months in a dashboard.
-
----
-
-## Progress
-
-### Phase 1: Core Watch App
-- [x] Background activity and sedentary tracking.
-- [x] Native sleep and off-body detection.
-- [x] On-watch dashboard and wellness scores.
-
-### Phase 2: Phone Integration
-- [x] Background synchronization between watch and phone.
-- [x] History dashboard for long-term trends.
-- [x] Persistent storage for yearly progress.
-
-### Phase 3: Refinement
-- [x] Gamified Vitality system (Levels, XP, Ranks).
-- [x] Revamped UI/UX with simplified navigation.
-- [x] Integrated Help & Guide for users.
-- [ ] Implement buffer/cooldown for "Take a break" button to prevent spam.
-- [ ] Predictive reminders based on your schedule.
-- [ ] Custom haptics and sounds.
-- [ ] Improved charts and visualizations.
-
----
-
-## Tech Stack
-- **Kotlin 2.0**
-- **Jetpack Compose** (Material 3)
-- **Room & DataStore** for storage.
-- **Wear Health Services** for activity tracking.
-
----
-
-## Getting Started
-
-### Prerequisites
-- Android Studio Ladybug or newer.
-- A watch or emulator running Wear OS 4.0+.
-
-### Build & Run
-1. Clone the repository.
-2. Open in Android Studio.
-3. Run the `wear` configuration on your watch.
-
-```bash
-# Build APKs
-./gradlew :wear:assembleDebug
-./gradlew :mobile:assembleDebug
+```mermaid
+stateDiagram-v2
+    [*] --> Active: User is moving
+    Active --> Sedentary: Sitting detected
+    
+    state Sedentary {
+        [*] --> Tracking
+        Tracking --> Reminder: Threshold breached
+        Reminder --> Tracking
+        
+        Tracking --> Stopped: Movement / System Event
+        Tracking --> Interrupted: Device Shutdown / Crash
+    }
+    
+    Stopped --> Active: Log "Stopped" with duration
+    Interrupted --> Active: Log "Reset" (Unknown duration)
+    
+    Active --> [*]
 ```
 
----
+### Event Types
+- **SEDENTARY_START**: Logged when movement stops.
+- **REMINDER_SENT**: Logged when a sedentary threshold is breached.
+- **SEDENTARY_STOPPED**: Logged when the user moves or a system event (Sleep/Exercise/Wrist-off) occurs. Includes final duration.
+- **SEDENTARY_RESET**: Logged upon app restart if a previous session was interrupted (e.g., battery death). This indicates an unknown duration to preserve data integrity.
 
-## Contributing
-We welcome contributions. If you're a developer, check out our [Contributing Guide](CONTRIBUTING.md) for technical details and simulation commands.
-
----
-
-## License
-Distributed under the GNU GPL v3 License.
+## Technical Guidelines
+Refer to [AGENTS.md](AGENTS.md) for project conventions and technical rules.

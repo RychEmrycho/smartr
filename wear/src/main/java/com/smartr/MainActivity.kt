@@ -54,6 +54,11 @@ class MainActivity : ComponentActivity() {
             settingsRepository.ensureDefaults()
         }
 
+        val historyRepository = com.smartr.data.history.HistoryRepository(applicationContext)
+        lifecycleScope.launch {
+            historyRepository.reconcileInterruptedEvents()
+        }
+
         val trackingStateRepository = com.smartr.data.TrackingStateRepository(applicationContext)
         lifecycleScope.launch {
             launch {

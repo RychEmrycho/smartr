@@ -87,6 +87,9 @@ class OffBodyService : Service(), SensorEventListener {
             
             serviceScope.launch {
                 trackingRepository.setOffBody(isOffBody)
+                if (isOffBody) {
+                    com.smartr.data.history.HistoryRepository(applicationContext).closeActiveSedentaryEvent("Watch removed")
+                }
             }
         }
     }

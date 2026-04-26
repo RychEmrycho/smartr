@@ -129,6 +129,9 @@ class PassiveDataService : PassiveListenerService() {
         if (PassiveRuntimeStore.isCharging != isCharging) {
             Log.i(TAG, "Charging status changed: $isCharging")
             PassiveRuntimeStore.isCharging = isCharging
+            if (isCharging) {
+                serviceScope.launch { HistoryRepository(applicationContext).closeActiveSedentaryEvent("Watch charging") }
+            }
         }
     }
 
@@ -170,12 +173,18 @@ class PassiveDataService : PassiveListenerService() {
         if (PassiveRuntimeStore.isWatchSleeping != isAsleep) {
             PassiveRuntimeStore.isWatchSleeping = isAsleep
             Log.i(TAG, "Sleep status changed: $isAsleep")
+            if (isAsleep) {
+                serviceScope.launch { HistoryRepository(applicationContext).closeActiveSedentaryEvent("Asleep") }
+            }
             changed = true
         }
 
         if (PassiveRuntimeStore.isExercising != isExercising) {
             PassiveRuntimeStore.isExercising = isExercising
             Log.i(TAG, "Exercise status changed: $isExercising")
+            if (isExercising) {
+                serviceScope.launch { HistoryRepository(applicationContext).closeActiveSedentaryEvent("Exercising") }
+            }
             changed = true
         }
 

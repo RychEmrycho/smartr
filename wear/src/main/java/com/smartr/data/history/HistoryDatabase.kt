@@ -112,6 +112,9 @@ interface SedentaryEventDao {
     @Update
     suspend fun update(event: SedentaryEvent)
 
+    @Query("DELETE FROM SedentaryEvent")
+    suspend fun clearAll()
+
     @Query("DELETE FROM SedentaryEvent WHERE dateIso = :dateIso")
     suspend fun deleteForDay(dateIso: String)
 }
