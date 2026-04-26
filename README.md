@@ -15,8 +15,9 @@ It is built to handle sedentary habits specifically. The app runs entirely on yo
 
 ### On the watch
 - **Vitality System**: A gamified experience with levels, XP, and ranks (Novice to Zen Master).
-- **Dashboard**: A quick look at your sitting time, level progress via the Vitality Ring, and 7-day trends.
+- **Dashboard**: A quick look at your level progress via the Vitality Ring, 7-day trends with visual sparklines, and phone connection status.
 - **Help & Guide**: Built-in guide explaining the scoring and leveling mechanics.
+- **Human-Readable History**: Detailed activity history with hourly heatmaps, weekly performance grades, and personal bests.
 - **Watch faces**: Streaks and scores available as complications.
 - **Manual logs**: Option to record a break manually to reset your timers.
 

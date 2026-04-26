@@ -30,7 +30,8 @@ This file contains the project conventions and technical rules for all AI coding
 - **Navigation**: `SwipeDismissableNavHost` is required.
 - **Wear OS 5**: Support advanced complications and haptic feedback profiles where applicable.
 - **Wellness Score**: Now part of the broader **Vitality System**.
-- **Vitality System**: Uses `BehaviorInsightsEngine` to calculate Levels, XP (+50 per break, -1 per 10m sitting), and Ranks (`Novice`, `Active`, `Flow Master`, `Zen Master`).
+- **Vitality System**: Uses `BehaviorInsightsEngine` to calculate Levels, XP (+50 per break, -1 per 10m sitting), Ranks (`Novice`, `Active`, `Flow Master`, `Zen Master`), and Weekly Performance Grades.
+- **Duration Formatting**: Always use `DurationFormatter` for sedentary time and records to ensure concise, human-readable units (e.g., `12d`, `2h`, `3m 2s`).
 - **Persistence**: 
     - **Room**: For structured daily/history data.
     - **DataStore**: For lightweight user preferences.
