@@ -33,7 +33,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Weekend
-import com.smartr.data.history.SedentaryEventType
+import com.smartr.data.history.EventType
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -121,6 +121,19 @@ fun DailyDetailScreen(
                 } else {
                     items(events.size) { index ->
                         val event = events[index]
+                        val nextEvent = if (index < events.size - 1) events[index + 1] else null
+                        
+                        // Show Time Section Header if period changed (descending order)
+                        val currentHour = Instant.parse(event.timestamp).atZone(ZoneId.systemDefault()).hour
+                        val nextHour = nextEvent?.let { Instant.parse(it.timestamp).atZone(ZoneId.systemDefault()).hour } ?: -1
+                        
+                        val currentSection = getTimeSection(currentHour)
+                        val nextSection = if (nextHour != -1) getTimeSection(nextHour) else null
+                        
+                        if (index == 0 || currentSection != nextSection) {
+                            SectionHeader(stringResource(currentSection))
+                        }
+
                         EventTimelineItem(
                             event = event,
                             thresholdSeconds = summary.sedentaryThresholdSeconds,
@@ -133,18 +146,36 @@ fun DailyDetailScreen(
     }
 }
 
+private fun getTimeSection(hour: Int): Int {
+    return when (hour) {
+        in 0..11 -> R.string.detail_morning
+        in 12..16 -> R.string.detail_afternoon
+        else -> R.string.detail_evening
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp, start = 8.dp)
+    )
+}
+
 @Composable
 private fun EventTimelineItem(
-    event: com.smartr.data.history.SedentaryEvent,
+    event: com.smartr.data.history.Event,
     thresholdSeconds: Int,
     isLast: Boolean
 ) {
     val context = LocalContext.current
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-    val startTime = Instant.ofEpochMilli(event.startTimeMillis).atZone(ZoneId.systemDefault()).toLocalTime()
+    val startTime = Instant.parse(event.timestamp).atZone(ZoneId.systemDefault()).toLocalTime()
     
     val (icon, color, title, subtitle) = when (event.type) {
-        SedentaryEventType.START -> {
+        EventType.SEDENTARY_START -> {
             Quad(
                 Icons.Default.Weekend, 
                 WellnessMid, 
@@ -152,31 +183,36 @@ private fun EventTimelineItem(
                 "Session started"
             )
         }
-        SedentaryEventType.STOPPED -> {
-            val isBreach = event.durationSeconds > thresholdSeconds
+        EventType.SEDENTARY_STOPPED -> {
+            val durationSeconds = event.metadata?.get("duration")?.toIntOrNull() ?: 0
+            val reason = event.metadata?.get("reason") ?: "Movement"
+            val isBreach = durationSeconds > thresholdSeconds
             val color = if (isBreach) WellnessLow else WellnessHigh
             
             Quad(
                 Icons.AutoMirrored.Filled.DirectionsRun, 
                 color, 
-                "Sedentary stopped",
-                "${DurationFormatter.format(context, event.durationSeconds)} (${event.metadata ?: "Movement"})"
+                "Sedentary stopped", 
+                "${DurationFormatter.format(context, durationSeconds)} ($reason)"
             )
         }
-        SedentaryEventType.RESET -> {
+        EventType.SEDENTARY_RESET -> {
             Quad(
                 Icons.Default.Refresh, 
                 MaterialTheme.colorScheme.error, 
                 "Sedentary reset", 
-                event.metadata ?: "Interrupted"
+                event.metadata?.get("reason") ?: "Interrupted"
             )
         }
-        SedentaryEventType.REMINDER_SENT -> Quad(
-            Icons.Default.Notifications, 
-            MaterialTheme.colorScheme.primary, 
-            "Reminder sent", 
-            "${DurationFormatter.format(context, event.durationSeconds)} sedentary"
-        )
+        EventType.REMINDER_SENT -> {
+            val durationSeconds = event.metadata?.get("duration")?.toIntOrNull() ?: 0
+            Quad(
+                Icons.Default.Notifications, 
+                MaterialTheme.colorScheme.primary, 
+                "Reminder sent", 
+                "${DurationFormatter.format(context, durationSeconds)} sedentary"
+            )
+        }
     }
 
     Row(

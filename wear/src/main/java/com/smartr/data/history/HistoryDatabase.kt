@@ -11,10 +11,12 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
-
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import java.time.Instant
 
 @Entity
 data class DailySummary(
@@ -33,7 +35,22 @@ data class PersonalBest(
     val dateIso: String
 )
 
+enum class EventType {
+    SEDENTARY_START, SEDENTARY_STOPPED, REMINDER_SENT, SEDENTARY_RESET
+}
+
+@Entity(tableName = "events")
+data class Event(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: String, // ISO-8601 / RFC3339
+    val type: EventType,
+    val sessionId: String?, // UUID to group session related events
+    val metadata: Map<String, String>? // Map converted to JSON string
+)
+
 class Converters {
+    private val json = Json
+
     @TypeConverter
     fun fromList(value: List<Int>): String = value.joinToString(",")
 
@@ -43,11 +60,19 @@ class Converters {
         else value.split(",").map { it.toInt() }
 
     @TypeConverter
-    fun fromEventType(value: SedentaryEventType): String = value.name
+    fun fromEventType(value: EventType): String = value.name
 
     @TypeConverter
-    fun toEventType(value: String): SedentaryEventType = 
-        try { SedentaryEventType.valueOf(value) } catch (e: Exception) { SedentaryEventType.START }
+    fun toEventType(value: String): EventType = 
+        try { EventType.valueOf(value) } catch (e: Exception) { EventType.SEDENTARY_START }
+
+    @TypeConverter
+    fun fromMetadata(value: Map<String, String>?): String? = 
+        value?.let { json.encodeToString(it) }
+
+    @TypeConverter
+    fun toMetadata(value: String?): Map<String, String>? = 
+        value?.let { try { json.decodeFromString<Map<String, String>>(it) } catch (e: Exception) { null } }
 }
 
 @Dao
@@ -83,48 +108,33 @@ interface PersonalBestDao {
     suspend fun findByType(type: String): PersonalBest?
 }
 
-enum class SedentaryEventType {
-    START, STOPPED, REMINDER_SENT, RESET
-}
-
-@Entity
-data class SedentaryEvent(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val dateIso: String,
-    val startTimeMillis: Long,
-    val endTimeMillis: Long? = null,
-    val type: SedentaryEventType,
-    val durationSeconds: Int = 0,
-    val metadata: String? = null
-)
-
 @Dao
-interface SedentaryEventDao {
+interface EventDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(event: SedentaryEvent): Long
+    suspend fun insert(event: Event): Long
 
-    @Query("SELECT * FROM SedentaryEvent WHERE dateIso = :dateIso ORDER BY startTimeMillis ASC")
-    fun eventsForDay(dateIso: String): Flow<List<SedentaryEvent>>
+    @Query("SELECT * FROM events WHERE timestamp >= :dayStart AND timestamp <= :dayEnd ORDER BY timestamp DESC")
+    fun eventsForRange(dayStart: String, dayEnd: String): Flow<List<Event>>
 
-    @Query("SELECT * FROM SedentaryEvent WHERE endTimeMillis IS NULL AND type = :type ORDER BY startTimeMillis DESC LIMIT 1")
-    suspend fun getActiveEvent(type: SedentaryEventType = SedentaryEventType.START): SedentaryEvent?
+    @Query("SELECT * FROM events WHERE type = :type AND sessionId IS NOT NULL ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestSessionEvent(type: EventType = EventType.SEDENTARY_START): Event?
 
     @Update
-    suspend fun update(event: SedentaryEvent)
+    suspend fun update(event: Event)
 
-    @Query("DELETE FROM SedentaryEvent")
+    @Query("DELETE FROM events")
     suspend fun clearAll()
 
-    @Query("DELETE FROM SedentaryEvent WHERE dateIso = :dateIso")
+    @Query("DELETE FROM events WHERE timestamp LIKE :dateIso || '%'")
     suspend fun deleteForDay(dateIso: String)
 }
 
-@Database(entities = [DailySummary::class, PersonalBest::class, SedentaryEvent::class], version = 6, exportSchema = false)
+@Database(entities = [DailySummary::class, PersonalBest::class, Event::class], version = 7, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dailySummaryDao(): DailySummaryDao
     abstract fun personalBestDao(): PersonalBestDao
-    abstract fun sedentaryEventDao(): SedentaryEventDao
+    abstract fun eventDao(): EventDao
 
     companion object {
         @Volatile
