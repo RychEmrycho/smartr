@@ -96,7 +96,8 @@ class MainActivity : ComponentActivity() {
         permissionLauncher.launch(
             arrayOf(
                 Manifest.permission.BODY_SENSORS,
-                Manifest.permission.ACTIVITY_RECOGNITION
+                Manifest.permission.ACTIVITY_RECOGNITION,
+                Manifest.permission.POST_NOTIFICATIONS
             )
         )
 

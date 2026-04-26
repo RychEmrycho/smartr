@@ -29,11 +29,8 @@ fun HourlyHeatmap(
         ) {
             hourlyData.forEach { seconds ->
                 val heightPercent = (seconds / 3600f).coerceIn(0.1f, 1f)
-                val color = when {
-                    seconds > thresholdSeconds -> WellnessLow
-                    seconds > thresholdSeconds / 2 -> WellnessMid
-                    else -> WellnessHigh.copy(alpha = 0.5f)
-                }
+                val criticality = com.smartr.logic.SedentaryCriticality.fromDuration(seconds, thresholdSeconds)
+                val color = criticality.getColor()
                 
                 Box(
                     modifier = Modifier

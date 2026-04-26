@@ -188,8 +188,8 @@ private fun EventTimelineItem(
         EventType.SEDENTARY_STOPPED -> {
             val durationSeconds = event.metadata?.get("duration")?.toIntOrNull() ?: 0
             val reason = event.metadata?.get("reason") ?: "Movement"
-            val isBreach = durationSeconds > thresholdSeconds
-            val color = if (isBreach) WellnessLow else WellnessHigh
+            val criticality = com.smartr.logic.SedentaryCriticality.fromDuration(durationSeconds, thresholdSeconds)
+            val color = criticality.getColor()
             
             Quad(
                 Icons.AutoMirrored.Filled.DirectionsRun, 

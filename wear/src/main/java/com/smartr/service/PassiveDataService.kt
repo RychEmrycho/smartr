@@ -155,9 +155,12 @@ class PassiveDataService : PassiveListenerService() {
         }
 
         if (decision.shouldRemind) {
+            val settings = com.smartr.data.SettingsRepository(applicationContext).currentSettings()
+            val thresholdSeconds = settings.sitThresholdUnit.toDuration(settings.sitThresholdValue).seconds.toInt()
+
             val scheduler = ReminderScheduler(applicationContext)
             scheduler.ensureChannel()
-            scheduler.sendReminder(decision.sedentaryDurationSeconds)
+            scheduler.sendReminder(decision.sedentaryDurationSeconds, thresholdSeconds)
             historyRepository.recordReminderSent(
                 date = LocalDate.now(ZoneId.systemDefault()),
                 durationSeconds = decision.sedentaryDurationSeconds
