@@ -18,6 +18,7 @@ import com.smartr.presentation.theme.WellnessHigh
 @Composable
 fun HourlyHeatmap(
     hourlyData: List<Int>,
+    thresholdSeconds: Int,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -26,11 +27,11 @@ fun HourlyHeatmap(
             horizontalArrangement = Arrangement.spacedBy(1.dp),
             verticalAlignment = Alignment.Bottom
         ) {
-            hourlyData.forEach { minutes ->
-                val heightPercent = (minutes / 60f).coerceIn(0.1f, 1f)
+            hourlyData.forEach { seconds ->
+                val heightPercent = (seconds / 3600f).coerceIn(0.1f, 1f)
                 val color = when {
-                    minutes > 45 -> WellnessLow
-                    minutes > 20 -> WellnessMid
+                    seconds > thresholdSeconds -> WellnessLow
+                    seconds > thresholdSeconds / 2 -> WellnessMid
                     else -> WellnessHigh.copy(alpha = 0.5f)
                 }
                 

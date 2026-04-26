@@ -130,6 +130,7 @@ fun HistoryScreen(
                             Spacer(Modifier.height(4.dp))
                             HourlyHeatmap(
                                 hourlyData = summary.hourlySedentarySeconds,
+                                thresholdSeconds = summary.sedentaryThresholdSeconds,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
