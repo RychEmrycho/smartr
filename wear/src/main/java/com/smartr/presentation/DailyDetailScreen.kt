@@ -121,24 +121,26 @@ fun DailyDetailScreen(
                 } else {
                     items(events.size) { index ->
                         val event = events[index]
-                        val nextEvent = if (index < events.size - 1) events[index + 1] else null
+                        val previousEvent = if (index > 0) events[index - 1] else null
                         
                         // Show Time Section Header if period changed (descending order)
                         val currentHour = Instant.parse(event.timestamp).atZone(ZoneId.systemDefault()).hour
-                        val nextHour = nextEvent?.let { Instant.parse(it.timestamp).atZone(ZoneId.systemDefault()).hour } ?: -1
+                        val previousHour = previousEvent?.let { Instant.parse(it.timestamp).atZone(ZoneId.systemDefault()).hour } ?: -1
                         
                         val currentSection = getTimeSection(currentHour)
-                        val nextSection = if (nextHour != -1) getTimeSection(nextHour) else null
+                        val previousSection = if (previousHour != -1) getTimeSection(previousHour) else -1
                         
-                        if (index == 0 || currentSection != nextSection) {
-                            SectionHeader(stringResource(currentSection))
-                        }
+                        Column {
+                            if (index == 0 || currentSection != previousSection) {
+                                SectionHeader(stringResource(currentSection))
+                            }
 
-                        EventTimelineItem(
-                            event = event,
-                            thresholdSeconds = summary.sedentaryThresholdSeconds,
-                            isLast = index == events.size - 1
-                        )
+                            EventTimelineItem(
+                                event = event,
+                                thresholdSeconds = summary.sedentaryThresholdSeconds,
+                                isLast = index == events.size - 1
+                            )
+                        }
                     }
                 }
             }
