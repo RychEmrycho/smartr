@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -19,8 +20,6 @@ fun Sparkline(
 ) {
     if (data.isEmpty()) return
 
-    // Path objects are hoisted but reset in DrawScope
-    // However, they are still re-calculated based on size change
     val strokePath = remember { Path() }
     val fillPath = remember { Path() }
 
@@ -75,6 +74,25 @@ fun Sparkline(
                     width = 2.dp.toPx()
                 )
             )
+
+            // Draw dots to mark each day
+            data.forEachIndexed { index, value ->
+                val x = index * spacing
+                val normalizedY = (value - minVal) / range
+                val y = height - (normalizedY * height)
+                
+                drawCircle(
+                    color = color,
+                    radius = 3.dp.toPx(),
+                    center = Offset(x, y)
+                )
+                // Draw a tiny white center for better visibility
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.9f),
+                    radius = 1.dp.toPx(),
+                    center = Offset(x, y)
+                )
+            }
         }
     }
 }
